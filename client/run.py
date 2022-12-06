@@ -12,6 +12,7 @@ if __name__ == "__main__":
                         help="Robot IP address. On robot or Local Naoqi: use '127.0.0.1'.")
     parser.add_argument("--port", type=int, default=9559,
                         help="Naoqi port number")
+    parser.add_argument("--ocr", type=str, help="OCR server address")
 
     args = parser.parse_args()
     try:
@@ -21,5 +22,5 @@ if __name__ == "__main__":
         print ("Can't connect to Naoqi at ip \"" + args.ip + "\" on port " + str(args.port) + ".\n"
                                                                                               "Please check your script arguments. Run with -h option for help.")
         sys.exit(1)
-    react_to_touch = NAOLibrarian(app)
+    react_to_touch = NAOLibrarian(app, args.ocr)
     app.run()

@@ -41,3 +41,7 @@ class BookInfo(object):
 
     def __str__(self):
         return "BookInfo: {} by {}".format(self.title, self.author)
+
+    @classmethod
+    def from_json(cls, json_text):
+        return cls(json_text['title'], json_text['author'])

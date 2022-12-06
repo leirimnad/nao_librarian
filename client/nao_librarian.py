@@ -3,12 +3,15 @@ import copy
 from book import Book, BookInfo
 import numpy as np
 import cv2
+import requests
 
 
 class NAOLibrarian(object):
-    def __init__(self, app):
+    def __init__(self, app, ocr_server_address):
         super(NAOLibrarian, self).__init__()
         self.foot_len = 3.0 / 100.0
+
+        self.ocr_server_address = ocr_server_address
 
         # Get the services ALMemory, ALTextToSpeech.
         self.id = None
@@ -176,8 +179,13 @@ class NAOLibrarian(object):
         return file_path
 
     def send_photo_to_server(self, photo_path):
-        # type: (NAOLibrarian, str) -> BookInfo
-        pass
+        # type: (str) -> BookInfo or None
+
+        response = requests.post(self.ocr_server_address, files={"image": open(photo_path, "rb")})
+        if response.status_code != 200:
+            return None
+
+        return BookInfo.from_json(response.json())
 
     def on_book_info_not_found(self):
         # type: () -> None
