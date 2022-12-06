@@ -33,6 +33,7 @@ def findBooks(img,server,threshold=0.2):
         objects = list(set(objects))
         return objects
     return null
+
 def takePicture(session):
     vd = session.service("ALVideoDevice")
 
@@ -47,7 +48,7 @@ def takePicture(session):
     #cv2.imwrite(expanduser("~") + "/zivs/zivs-task01/cam.png", nparr)
     return nparr
 
-motionProxy = ALProxy("ALMotion", robotIP, 9559)
+motionProxy = session.service("ALMotion")
 flag = True
 img = takePicture(session)
 while(findBooks(img,server) == null):
