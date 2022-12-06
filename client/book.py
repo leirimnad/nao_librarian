@@ -12,6 +12,11 @@ class ImageBook(object):
         self.vertical_distance, self.horizontal_distance, self.distance, self.rotation = \
             get_distance((xl + xr) / 2, (yt + yb) / 2, image)
 
+    def get_similar_books(self, books):
+        # type: (ImageBook, list) -> ImageBook
+        # TODO: Implement this
+        sorted_books = sorted(books, key=lambda book: abs(book.distance-self.distance))
+        return sorted_books[0]
 
 class Book(object):
     def __init__(self, image_book):
