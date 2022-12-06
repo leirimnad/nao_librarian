@@ -39,6 +39,34 @@ def takePicture(session):
     #cv2.imwrite(expanduser("~") + "/zivs/zivs-task01/cam.png", nparr)
     return nparr
 
+def look_for_book():
+    books = findBooks(img,server)
+    while(books == None):
+        for i in range(0,2):#lean 2x30 deg = 60 deg right
+            blink(led_proxy,flag)
+            motionProxy.post.moveTo(0, 0, np.pi/6)
+            img = takePicture(session)
+            books = findBooks(img,server)
+            if(books):
+                return books
+        #reset position   
+        motionProxy.post.moveTo(0,0,2/6*np.pi)
+        
+        for i in range(0,2):
+            blink(led_proxy,flag)
+            motionProxy.post.moveTo(0, 0, np.pi/6)
+            img = takePicture(session)
+            books = findBooks(img,server)
+            if(books):
+                return books
+        motionProxy.post.moveTo(0,0,-2/6*np.pi)
+        motionProxy.post.MoveTo(0,0.5,0)
+        books = findBooks(img,server)
+    return books 
+
+
+
+
 app = qi.Application()
 app.start()
 
@@ -52,25 +80,4 @@ motionProxy = session.service("ALMotion")
 led_proxy = session.service("ALLeds")
 flag = True
 img = takePicture(session)
-while(findBooks(img,server) == None):
-    for i in range(0,2):#lean 2x30 deg = 60 deg right
-        blink(led_proxy,flag)
-        motionProxy.post.moveTo(0, 0, np.pi/6)
-        img = takePicture(session)
-        if(findBooks(img,server)):
-            break
-     #reset position   
-    motionProxy.post.moveTo(0,0,2/6*np.pi)
-     
-    for i in range(0,2):
-        blink(led_proxy,flag)
-        motionProxy.post.moveTo(0, 0, np.pi/6)
-        img = takePicture(session)
-        if(findBooks(img,server)):
-            break
-    motionProxy.post.moveTo(0,0,-2/6*np.pi)
-    motionProxy.post.MoveTo(0,0.5,0)
 
-
-
-    
