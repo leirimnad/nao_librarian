@@ -4,15 +4,6 @@ import motion
 import time
 from naoqi import ALProxy
 
-app = qi.Application()
-app.start()
-
-session = app.session
-
-
-server = qi.Session()
-server.connect("tcp://10.10.48.91:9999")
-
 def blink(proxy,flag):
     if(flag):
         proxy.fadeRgb(eyes,'#E5FFCC',0.5)
@@ -47,6 +38,15 @@ def takePicture(session):
 
     #cv2.imwrite(expanduser("~") + "/zivs/zivs-task01/cam.png", nparr)
     return nparr
+
+app = qi.Application()
+app.start()
+
+session = app.session
+
+
+server = qi.Session()
+server.connect("tcp://10.10.48.91:9999")
 
 motionProxy = session.service("ALMotion")
 flag = True
