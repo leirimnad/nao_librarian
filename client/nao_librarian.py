@@ -15,6 +15,7 @@ class NAOLibrarian(object):
         self.memory_service = session.service("ALMemory")
         self.tts = session.service("ALTextToSpeech")
         self.motion = session.service("ALMotion")
+        session.service("ALNavigation")
         self.touch = self.memory_service.subscriber("TouchChanged")
 
     def run(self):
