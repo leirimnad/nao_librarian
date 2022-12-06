@@ -1,6 +1,8 @@
 # coding=utf-8
 import copy
 from book import Book, BookInfo
+import numpy as np
+import cv2
 
 
 class NAOLibrarian(object):
@@ -15,7 +17,20 @@ class NAOLibrarian(object):
         self.memory_service = session.service("ALMemory")
         self.tts = session.service("ALTextToSpeech")
         self.motion = session.service("ALMotion")
+        self.video_device = session.service("ALVideoDevice")
         session.service("ALNavigation")
+
+        resolutions = {
+            "1280*960": 3,
+            "640*480": 2,
+            "320*240": 1
+        }
+        color_space = 11  # BGR=13, RGB=11
+
+        # read image to file
+        self.lower_camera = \
+            self.video_device.subscribeCamera("kBottomCamera", 1, resolutions["1280*960"], color_space, fps=30)
+
         self.touch = self.memory_service.subscriber("TouchChanged")
 
     def run(self):
@@ -151,7 +166,14 @@ class NAOLibrarian(object):
 
     def take_book_photo(self, book):
         # type: (NAOLibrarian, Book) -> str
-        pass
+        file_path = "./run/cover.png"
+
+        rgb_image_ = self.video_device.getImageRemote(self.lower_camera)
+        rgb_image = rgb_image_[6]
+        np_arr = np.fromstring(rgb_image, np.uint8)
+        np_arr = np_arr.reshape(960, 1280, 3)
+        cv2.imwrite(file_path, np_arr)
+        return file_path
 
     def send_photo_to_server(self, photo_path):
         # type: (NAOLibrarian, str) -> BookInfo
