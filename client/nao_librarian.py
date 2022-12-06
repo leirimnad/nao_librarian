@@ -1,5 +1,6 @@
 # coding=utf-8
 import functools
+from book import Book, BookInfo
 
 
 class NAOLibrarian(object):
@@ -41,10 +42,10 @@ class NAOLibrarian(object):
 
     def run_book_scenario(self, book):
         self.go_to_book(book)
-        photo = self.take_book_photo(book)
+        photo_path = self.take_book_photo(book)
 
         # TODO: async call
-        book_info = self.send_photo_to_server(photo)
+        book_info = self.send_photo_to_server(photo_path)
 
         if book_info is None:
             self.on_book_info_not_found()
@@ -58,3 +59,38 @@ class NAOLibrarian(object):
 
         self.box_found_decorations(book_info)
 
+    def look_for_book(self):
+        # type: (NAOLibrarian) -> Book
+        pass
+
+    def on_book_not_found(self):
+        pass
+
+    def book_found_decorations(self, book):
+        pass
+
+    def go_to_book(self, book):
+        pass
+
+    def take_book_photo(self, book):
+        # type: (NAOLibrarian, Book) -> str
+        pass
+
+    def send_photo_to_server(self, photo_path):
+        # type: (NAOLibrarian, str) -> BookInfo
+        pass
+
+    def on_book_info_not_found(self):
+        pass
+
+    def say_book_info(self, book_info):
+        pass
+
+    def go_to_box_area(self):
+        pass
+
+    def go_to_box(self, book_info):
+        pass
+
+    def box_found_decorations(self, book_info):
+        pass
