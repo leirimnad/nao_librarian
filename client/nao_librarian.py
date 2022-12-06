@@ -93,7 +93,12 @@ class NAOLibrarian(object):
 
     def say_book_info(self, book_info):
         # type: (NAOLibrarian, BookInfo) -> None
-        pass
+        tts.say("Jedná se o knihu")
+        tts.say(book_info.title)
+        tts.say("Od autora")
+        tts.say(book_info.author)
+        #tts.say("a je to")
+        #tts.say(book_info.genre)
 
     def go_to_box_area(self):
         # type: (NAOLibrarian) -> None

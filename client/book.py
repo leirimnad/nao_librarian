@@ -15,10 +15,11 @@ class Book(object):
 
 
 class BookInfo(object):
-    def __init__(self, title, author):
+    def __init__(self, title, author, genre):
         super(BookInfo, self).__init__()
         self.title = title
         self.author = author
+        self.genre = genre
 
     def __str__(self):
-        return "BookInfo: {} by {}".format(self.title, self.author)
+        return "BookInfo: {} by {} of genre {}".format(self.title, self.author, self.genre)
