@@ -14,11 +14,12 @@ class ImageBook(object):
 
 
 class Book(object):
-    def __init__(self, ImageBook):
-        self.x = ImageBook.vertical_distance
-        self.y = ImageBook.horizontal_distance
-        self.rotation = ImageBook.rotation
-        self.distance = ImageBook.distance
+    def __init__(self, image_book):
+        self.image_book = image_book
+        self.x = image_book.vertical_distance
+        self.y = image_book.horizontal_distance
+        self.rotation = image_book.rotation
+        self.distance = image_book.distance
 
     def add_info(self, info):
         self.info = info
