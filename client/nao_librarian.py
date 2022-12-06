@@ -31,6 +31,8 @@ class NAOLibrarian(object):
                 break
 
     def start_script(self):
+        # type: (NAOLibrarian) -> None
+
         book = self.look_for_book()
         if book is None:
             self.on_book_not_found()
@@ -41,6 +43,8 @@ class NAOLibrarian(object):
         self.run_book_scenario(book)
 
     def run_book_scenario(self, book):
+        # type: (NAOLibrarian, Book) -> None
+
         self.go_to_book(book)
         photo_path = self.take_book_photo(book)
 
@@ -64,12 +68,15 @@ class NAOLibrarian(object):
         pass
 
     def on_book_not_found(self):
+        # type: (NAOLibrarian) -> None
         pass
 
     def book_found_decorations(self, book):
+        # type: (NAOLibrarian, Book) -> None
         pass
 
     def go_to_book(self, book):
+        # type: (NAOLibrarian, Book) -> None
         pass
 
     def take_book_photo(self, book):
@@ -81,16 +88,21 @@ class NAOLibrarian(object):
         pass
 
     def on_book_info_not_found(self):
+        # type: (NAOLibrarian) -> None
         pass
 
     def say_book_info(self, book_info):
+        # type: (NAOLibrarian, BookInfo) -> None
         pass
 
     def go_to_box_area(self):
+        # type: (NAOLibrarian) -> None
         pass
 
     def go_to_box(self, book_info):
+        # type: (NAOLibrarian, BookInfo) -> None
         pass
 
     def box_found_decorations(self, book_info):
+        # type: (NAOLibrarian, BookInfo) -> None
         pass
