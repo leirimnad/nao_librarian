@@ -193,7 +193,8 @@ class NAOLibrarian(object):
 
     def say_book_info(self, book_info):
         # type: (BookInfo) -> None
-        pass
+        self.tts.say("The book is called: " + book_info.title)
+        self.tts.say("The author is: " + book_info.author)
 
     def go_to_box_area(self):
         # type: () -> None
