@@ -81,6 +81,7 @@ class NAOLibrarian(object):
     def go_to_book(self, book):
         # type: (NAOLibrarian, Book) -> None
         self.move_with_stops(book, self.look_for_book)
+        self.change_posture_for_photo()
 
     def move_to_book(self, book):
         # type: (NAOLibrarian, Book) -> None
@@ -141,6 +142,12 @@ class NAOLibrarian(object):
             safe_distance=safe_distance,
             min_step_distance=min_step_distance
         )
+
+    def change_posture_for_photo(self):
+        # type: (NAOLibrarian) -> None
+        self.motion.setStiffnesses("Head", 1.0)
+        self.motion.setAngles("HeadPitch", 0.0, 0.1)
+        self.motion.setAngles("HeadYaw", 0.0, 0.1)
 
     def take_book_photo(self, book):
         # type: (NAOLibrarian, Book) -> str
