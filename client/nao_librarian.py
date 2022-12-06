@@ -49,7 +49,7 @@ class NAOLibrarian(object):
                 break
 
     def start_script(self):
-        # type: (NAOLibrarian) -> None
+        # type: () -> None
 
         book = self.look_for_book()
         if book is None:
@@ -61,7 +61,7 @@ class NAOLibrarian(object):
         self.run_book_scenario(book)
 
     def run_book_scenario(self, book):
-        # type: (NAOLibrarian, Book) -> None
+        # type: (Book) -> None
 
         self.go_to_book(book)
         photo_path = self.take_book_photo(book)
@@ -82,19 +82,19 @@ class NAOLibrarian(object):
         self.box_found_decorations(book_info)
 
     def look_for_book(self):
-        # type: (NAOLibrarian) -> Book
+        # type: () -> Book
         pass
 
     def on_book_not_found(self):
-        # type: (NAOLibrarian) -> None
+        # type: () -> None
         pass
 
     def book_found_decorations(self, book):
-        # type: (NAOLibrarian, Book) -> None
+        # type: (Book) -> None
         pass
 
     def go_to_book(self, book):
-        # type: (NAOLibrarian, Book) -> None
+        # type: (Book) -> None
         self.move_with_stops(book, self.look_for_book)
         self.change_posture_for_photo()
 
@@ -159,13 +159,13 @@ class NAOLibrarian(object):
         )
 
     def change_posture_for_photo(self):
-        # type: (NAOLibrarian) -> None
+        # type: () -> None
         self.motion.setStiffnesses("Head", 1.0)
         self.motion.setAngles("HeadPitch", 0.0, 0.1)
         self.motion.setAngles("HeadYaw", 0.0, 0.1)
 
     def take_book_photo(self, book):
-        # type: (NAOLibrarian, Book) -> str
+        # type: (Book) -> str
         file_path = "./run/cover.png"
 
         rgb_image_ = self.video_device.getImageRemote(self.lower_camera)
@@ -180,21 +180,21 @@ class NAOLibrarian(object):
         pass
 
     def on_book_info_not_found(self):
-        # type: (NAOLibrarian) -> None
+        # type: () -> None
         pass
 
     def say_book_info(self, book_info):
-        # type: (NAOLibrarian, BookInfo) -> None
+        # type: (BookInfo) -> None
         pass
 
     def go_to_box_area(self):
-        # type: (NAOLibrarian) -> None
+        # type: () -> None
         pass
 
     def go_to_box(self, book_info):
-        # type: (NAOLibrarian, BookInfo) -> None
+        # type: (BookInfo) -> None
         pass
 
     def box_found_decorations(self, book_info):
-        # type: (NAOLibrarian, BookInfo) -> None
+        # type: (BookInfo) -> None
         pass
