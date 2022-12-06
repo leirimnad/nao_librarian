@@ -1,6 +1,7 @@
 # coding=utf-8
 import functools
 from book import Book, BookInfo
+from tools import get_distance
 
 
 class NAOLibrarian(object):
