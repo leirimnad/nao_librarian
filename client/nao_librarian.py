@@ -90,11 +90,11 @@ class NAOLibrarian(object):
 
     def on_book_not_found(self):
         # type: () -> None
-        pass
+        self.tts.say("Book not found!")
 
     def book_found_decorations(self, book):
         # type: (Book) -> None
-        pass
+        self.tts.say("Book found!")
 
     def go_to_book(self, book):
         # type: (Book) -> None
@@ -189,7 +189,7 @@ class NAOLibrarian(object):
 
     def on_book_info_not_found(self):
         # type: () -> None
-        pass
+        self.tts.say("I did not find the book info")
 
     def say_book_info(self, book_info):
         # type: (BookInfo) -> None
