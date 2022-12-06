@@ -46,23 +46,13 @@ flag = True
 img = takePicture(session)
 while(findBooks(img,server) == null):
     for i in range(0,2):
-        if(flag):
-            proxy.fadeRgb(eyes,'#E5FFCC',0.5)
-            flag=not flag
-        else:
-            proxy.fadeRgb(eyes,'#7F00FF',0.5)
-            flag=not flag
+       blink(proxy)
         motionProxy.post.moveTo(0, 0, Math.PI/6)
         
      motionProxy.post.moveTo(0,0,2/6*Math.PI)
      
      for i in range(0,5):
-        if(flag):
-            proxy.fadeRgb(eyes,'E5FFCC',0.5)
-            flag=not flag
-        else:
-            proxy.fadeRgb(eyes,'#7F00FF',0.5)
-            flag=not flag
+        bliknk(proxy)
         motionProxy.post.moveTo(0, 0, Math.PI/6)
         img = takePicture(session)
     motionProxy.post.moveTo(0,0,-2/6*Math.PI)
