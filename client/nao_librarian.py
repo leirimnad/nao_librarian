@@ -191,7 +191,7 @@ class NAOLibrarian(object):
     def send_photo_to_server(self, photo_path):
         # type: (str) -> BookInfo or None
 
-        response = requests.post(self.ocr_server_address, files={"image": open(photo_path, "rb")})
+        response = requests.post(self.ocr_server_address, files={"book": open(photo_path, "rb")})
         if response.status_code != 200:
             return None
 
@@ -226,6 +226,13 @@ class NAOLibrarian(object):
     def go_to_box(self, book_info):
         # type: (BookInfo) -> None
         pass
+
+    def get_text_from_image(self, image_path):
+        # type: (str) -> ...
+        response = requests.post(self.ocr_server_address, files={"image": open(image_path, "rb")})
+        if response.status_code != 200:
+            return None
+        return response.json()["text"]
 
     def box_found_decorations(self, book_info):
         # type: (BookInfo) -> None
