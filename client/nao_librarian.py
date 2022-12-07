@@ -9,6 +9,7 @@ import requests
 class NAOLibrarian(object):
     def __init__(self, app, ocr_server_address):
         super(NAOLibrarian, self).__init__()
+        self.box_step = 30.0 / 100.0
         self.foot_len = 3.0 / 100.0
 
         self.ocr_server_address = ocr_server_address
@@ -71,9 +72,14 @@ class NAOLibrarian(object):
 
         self.go_to_box_area()
 
-        self.go_to_box(book_info)
+        box_category = self.find_box(book_info)
 
-        self.box_found_decorations(book_info)
+        if box_category is not None:
+            self.box_found_decorations(book_info, box_category)
+        else:
+            self.box_not_found_decorations(book_info)
+
+        self.go_to_position(*self.position_history[0])
 
     def look_for_book(self):
         # type: () -> Book
@@ -223,9 +229,22 @@ class NAOLibrarian(object):
             theta - current_position[2]
         )
 
-    def go_to_box(self, book_info):
-        # type: (BookInfo) -> None
-        pass
+    def find_box(self, book_info):
+        # type: (BookInfo) -> str or None
+        text = self.get_text_from_image(self.take_photo())
+        if text is None or not text.startswith("NAOBox:"):
+            self.tts.say("I did not find the box in the box area")
+            return None
+
+        if book_info.aligns_with_category(text):
+            return text[7:]
+        else:
+            self.move_to_next_box()
+            self.find_box(book_info)
+
+    def move_to_next_box(self):
+        # type: () -> None
+        self.moveTo(0, self.box_step, 0)
 
     def get_text_from_image(self, image_path):
         # type: (str) -> ...
@@ -234,6 +253,11 @@ class NAOLibrarian(object):
             return None
         return response.json()["text"]
 
-    def box_found_decorations(self, book_info):
+    def box_found_decorations(self, book_info, box_category):
+        # type: (BookInfo, str) -> None
+        self.tts.say("This is the right box to put this book in, it is called: " + box_category)
+
+    def box_not_found_decorations(self, book_info):
         # type: (BookInfo) -> None
-        pass
+        self.tts.say("I did not find the right box to put this book in")
+        self.tts.say("There are no boxes for categories like: " + ", ".join(book_info.categories))
