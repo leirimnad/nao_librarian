@@ -15,8 +15,9 @@ class ImageBook(object):
     def get_similar_books(self, books):
         # type: (ImageBook, list) -> ImageBook
         # TODO: Implement this
-        sorted_books = sorted(books, key=lambda book: abs(book.distance-self.distance))
+        sorted_books = sorted(books, key=lambda book: abs(book.distance - self.distance))
         return sorted_books[0]
+
 
 class Book(object):
     def __init__(self, image_book):
