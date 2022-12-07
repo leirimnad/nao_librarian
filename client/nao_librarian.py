@@ -23,6 +23,7 @@ class NAOLibrarian(object):
         self.video_device = session.service("ALVideoDevice")
         session.service("ALNavigation")
 
+        self.position_history = [] # type: list[Position6D]
 
         self.touch = self.memory_service.subscriber("TouchChanged")
 
@@ -96,7 +97,7 @@ class NAOLibrarian(object):
 
         print("Moving to book: " + str(book))
 
-        self.motion.moveTo(
+        self.moveTo(
             book.image_book.vertical_distance / 100 - self.foot_len,
             (-1) * book.image_book.horizontal_distance / 100 - self.foot_len,
             -1 * book.image_book.angle
@@ -124,7 +125,7 @@ class NAOLibrarian(object):
 
         print("Moving to book: " + str(book) + ", stops left:" + str(stops))
 
-        self.motion.moveTo(
+        self.moveTo(
             (image_book.vertical_distance / 100 - self.foot_len) * stop_mult,
             ((-1) * image_book.horizontal_distance / 100 - self.foot_len) * stop_mult,
             (-1 * image_book.angle) * stop_mult
@@ -150,6 +151,11 @@ class NAOLibrarian(object):
             safe_distance=safe_distance,
             min_step_distance=min_step_distance
         )
+
+    def moveTo(self, x, y, theta):
+        # type: (float, float, float) -> None
+        self.position_history.append(self.motion.getRobotPosition(True))
+        self.motion.moveTo(x, y, theta)
 
     def change_posture_for_photo(self):
         # type: () -> None
@@ -201,6 +207,7 @@ class NAOLibrarian(object):
 
     def go_to_box_area(self):
         # type: () -> None
+
         pass
 
     def go_to_box(self, book_info):
