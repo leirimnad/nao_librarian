@@ -23,7 +23,7 @@ class NAOLibrarian(object):
         self.video_device = session.service("ALVideoDevice")
         session.service("ALNavigation")
 
-        self.position_history = [] # type: list[Position6D]
+        self.position_history = []  # type: list[tuple[float, float, float]]
 
         self.touch = self.memory_service.subscriber("TouchChanged")
 
@@ -182,7 +182,8 @@ class NAOLibrarian(object):
         }
         color_space = 11  # BGR=13, RGB=11
 
-        lower_camera = self.video_device.subscribeCamera("kBottomCamera", 1, resolutions["1280*960"], color_space, fps=30)
+        lower_camera = self.video_device.subscribeCamera("kBottomCamera", 1, resolutions["1280*960"], color_space,
+                                                         fps=30)
         image = self.video_device.getImageRemote(lower_camera)
         self.video_device.unsubscribe(lower_camera)
         return image
@@ -207,8 +208,20 @@ class NAOLibrarian(object):
 
     def go_to_box_area(self):
         # type: () -> None
+        position_history_copy = copy.copy(self.position_history)
+        for position in reversed(position_history_copy):
+            self.go_to_position(*position, mirror_theta=True)
 
-        pass
+    def go_to_position(self, x, y, theta, mirror_theta=False):
+        # type: (float, float, float, bool) -> None
+        current_position = self.motion.getRobotPosition(True)
+        if mirror_theta:
+            theta = theta + 3.1415 if theta <= 0 else theta - 3.1415
+        self.moveTo(
+            x - current_position[0],
+            y - current_position[1],
+            theta - current_position[2]
+        )
 
     def go_to_box(self, book_info):
         # type: (BookInfo) -> None
