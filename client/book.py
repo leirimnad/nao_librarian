@@ -38,9 +38,16 @@ class BookInfo(object):
         super(BookInfo, self).__init__()
         self.title = title
         self.author = author
+        self.categories = []
 
     def __str__(self):
-        return "BookInfo: {} by {}".format(self.title, self.author)
+        return "BookInfo: {} by {}, categories: {}".format(self.title, self.author, ", ".join(self.categories))
+
+    def aligns_with_category(self, category):
+        for cat in self.categories:
+            if category.lower() in cat.lower():
+                return True
+        return False
 
     @classmethod
     def from_json(cls, json_text):
