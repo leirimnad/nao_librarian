@@ -23,16 +23,6 @@ class NAOLibrarian(object):
         self.video_device = session.service("ALVideoDevice")
         session.service("ALNavigation")
 
-        resolutions = {
-            "1280*960": 3,
-            "640*480": 2,
-            "320*240": 1
-        }
-        color_space = 11  # BGR=13, RGB=11
-
-        # read image to file
-        self.lower_camera = \
-            self.video_device.subscribeCamera("kBottomCamera", 1, resolutions["1280*960"], color_space, fps=30)
 
         self.touch = self.memory_service.subscriber("TouchChanged")
 
@@ -171,12 +161,25 @@ class NAOLibrarian(object):
         # type: (Book) -> str
         file_path = "./run/cover.png"
 
-        rgb_image_ = self.video_device.getImageRemote(self.lower_camera)
+        rgb_image_ = self.take_photo()
         rgb_image = rgb_image_[6]
         np_arr = np.fromstring(rgb_image, np.uint8)
         np_arr = np_arr.reshape(960, 1280, 3)
         cv2.imwrite(file_path, np_arr)
         return file_path
+
+    def take_photo(self):
+        resolutions = {
+            "1280*960": 3,
+            "640*480": 2,
+            "320*240": 1
+        }
+        color_space = 11  # BGR=13, RGB=11
+
+        lower_camera = self.video_device.subscribeCamera("kBottomCamera", 1, resolutions["1280*960"], color_space, fps=30)
+        image = self.video_device.getImageRemote(lower_camera)
+        self.video_device.unsubscribe(lower_camera)
+        return image
 
     def send_photo_to_server(self, photo_path):
         # type: (str) -> BookInfo or None
