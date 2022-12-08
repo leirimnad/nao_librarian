@@ -22,6 +22,7 @@ class NAOLibrarian(object):
         self.tts = session.service("ALTextToSpeech")
         self.motion = session.service("ALMotion")
         self.video_device = session.service("ALVideoDevice")
+        self.tracker = session.service("ALTracker")
         session.service("ALNavigation")
 
         self.position_history = []  # type: list[tuple[float, float, float]]
@@ -92,6 +93,7 @@ class NAOLibrarian(object):
     def book_found_decorations(self, book):
         # type: (Book) -> None
         self.tts.say("Book found!")
+        self.tracker.pointAt("RArm", [book.image_book.x, book.image_book.y, 0], 1, 0.1)
 
     def go_to_book(self, book):
         # type: (Book) -> None
