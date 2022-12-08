@@ -23,10 +23,11 @@ class NAOLibrarian(object):
         self.motion = session.service("ALMotion")
         self.video_device = session.service("ALVideoDevice")
         self.tracker = session.service("ALTracker")
+        self.posture = session.service("ALRobotPosture")
         session.service("ALNavigation")
 
         self.position_history = []  # type: list[tuple[float, float, float]]
-
+        self.posture.goToPosture("Stand", 0.5)
         self.touch = self.memory_service.subscriber("TouchChanged")
 
     def run(self):
