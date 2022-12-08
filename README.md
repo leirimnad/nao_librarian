@@ -5,7 +5,7 @@
 ## Running the project
 
 ```sh
-opt/robots/bin/python-naov6 run.py --ip 10.10.48.XXX --port 9559 --ocr 147.32.77.128:8080
+opt/robots/bin/python-naov6 run.py --ip 10.10.48.XXX --port 9559 --ocr 147.32.77.128:8080 --rec tcp://10.10.48.91:9999
 ```
 
 

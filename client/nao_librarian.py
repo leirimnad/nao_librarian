@@ -7,7 +7,7 @@ import requests
 
 
 class NAOLibrarian(object):
-    def __init__(self, app, ocr_server_address):
+    def __init__(self, app, ocr_server_address, rec_server_address):
         super(NAOLibrarian, self).__init__()
         self.box_step = 30.0 / 100.0
         self.foot_len = 3.0 / 100.0
@@ -26,6 +26,14 @@ class NAOLibrarian(object):
         self.video_device = session.service("ALVideoDevice")
         self.tracker = session.service("ALTracker")
         self.posture = session.service("ALRobotPosture")
+        self.leds = session.service("ALLeds")
+        self.blink_flag = False
+
+        # ALIMDetection
+        rec_server = qi.Session()
+        rec_server.connect(rec_server_address)
+        self.im_detect = rec_server.service("ALIMDetection")
+
         session.service("ALNavigation")
 
         self.position_history = []  # type: list[tuple[float, float, float]]
