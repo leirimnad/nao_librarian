@@ -20,6 +20,8 @@ class NAOLibrarian(object):
         session = app.session
         self.memory_service = session.service("ALMemory")
         self.tts = session.service("ALTextToSpeech")
+        self.tts.setLanguage("English")
+        self.tts.setVolume(0.2)
         self.motion = session.service("ALMotion")
         self.video_device = session.service("ALVideoDevice")
         self.tracker = session.service("ALTracker")
