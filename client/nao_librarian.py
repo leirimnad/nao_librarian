@@ -134,9 +134,10 @@ class NAOLibrarian(object):
     def find_book(self, img, threshold=0.2):
         res = self.im_detect.detect(img, None)
         res = list(filter(lambda o: o[2] > threshold, res))
+        res = list(filter(lambda o: o[0].lower() == "book", res))
         res.sort(key=lambda o: o[2], reverse=True)
 
-        return None if len(res) == 0 else ImageBook(img, res[-1][0], res[-1][1], res[-1][2], res[-1][3])
+        return None if len(res) == 0 else ImageBook(img, res[3][1], res[3][3], res[3][0], res[3][2])
 
     def on_book_not_found(self):
         # type: () -> None
