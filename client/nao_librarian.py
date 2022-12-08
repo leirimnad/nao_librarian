@@ -31,9 +31,9 @@ class NAOLibrarian(object):
         self.blink_flag = False
 
         # ALIMDetection
-        rec_server = qi.Session()
-        rec_server.connect(rec_server_address)
-        self.im_detect = rec_server.service("ALIMDetection")
+        self.rec_server = qi.Session()
+        self.rec_server.connect(rec_server_address)
+        self.im_detect = self.rec_server.service("ALIMDetection")
 
         session.service("ALNavigation")
 
@@ -105,13 +105,13 @@ class NAOLibrarian(object):
 
     def look_for_book(self):
         # type: () -> ImageBook
-        img = self.take_photo(resolution="640*480", return_numpy=True)
+        img = self.take_photo(resolution="640*480", return_numpy=False)
         book = self.find_book(img)
         while book is None:
             for i in range(0, 2):  # lean 2x30 deg = 60 deg right
-                self.blink()
+                # self.blink()
                 self.moveTo(0, 0, np.pi / 6)
-                img = self.take_photo(resolution="640*480", return_numpy=True)
+                img = self.take_photo(resolution="640*480", return_numpy=False)
                 book = self.find_book(img)
                 if book:
                     return book
@@ -120,9 +120,9 @@ class NAOLibrarian(object):
             self.moveTo(0, 0, 2 / 6 * np.pi)
 
             for i in range(0, 2):
-                self.blink()
+                # self.blink()
                 self.moveTo(0, 0, np.pi / 6)
-                img = self.take_photo(resolution="640*480", return_numpy=True)
+                img = self.take_photo(resolution="640*480", return_numpy=False)
                 book = self.find_book(img)
                 if book:
                     return book
@@ -247,11 +247,14 @@ class NAOLibrarian(object):
 
         color_space = 11  # BGR=13, RGB=11
 
-        lower_camera = self.video_device.subscribeCamera("kBottomCamera", 1, resolutions[resolution], color_space,
-                                                         fps=30)
+        lower_camera = self.video_device.subscribeCamera("kBottomCamera", 1, resolutions[resolution], color_space, 30)
         image = self.video_device.getImageRemote(lower_camera)
+        im = image[6]
+        nparr = np.frombuffer(im, np.uint8)
+        nparr = nparr.reshape(480, 640, 3)
         self.video_device.unsubscribe(lower_camera)
-        return image[6] if return_numpy else image
+        cv2.imwrite("/home/myrondan/zivs/pr-bi-zivs-2022-nao-knihovnik/client/cam.png", nparr)
+        return nparr if return_numpy else image
 
     def send_photo_to_server(self, photo_path):
         # type: (str) -> BookInfo or None
@@ -269,7 +272,7 @@ class NAOLibrarian(object):
     def say_book_info(self, book_info):
         # type: (BookInfo) -> None
         self.tts.say("The book is called: " + book_info.title)
-        self.tts.say("The author is: " + book_info.author)
+        self.tts.say("The nparrauthor is: " + book_info.author)
 
     def go_to_box_area(self):
         # type: () -> None
