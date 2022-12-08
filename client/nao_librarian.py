@@ -1,9 +1,10 @@
 # coding=utf-8
 import copy
-from book import Book, BookInfo
+from book import Book, BookInfo, ImageBook
 import numpy as np
 import cv2
 import requests
+import qi
 
 
 class NAOLibrarian(object):
@@ -95,9 +96,47 @@ class NAOLibrarian(object):
 
         self.go_to_position(*self.position_history[0])
 
+    def blink(self):
+        if self.blink_flag:
+            self.leds.fadeRgb('FaceLeds', '#E5FFCC', 0.5)
+        else:
+            self.leds.fadeRgb('FaceLeds', '#7F00FF', 0.5)
+        self.blink_flag = not self.blink_flag
+
     def look_for_book(self):
-        # type: () -> Book
-        pass
+        # type: () -> ImageBook
+        img = self.take_photo(resolution="640*480", return_numpy=True)
+        book = self.find_book(img)
+        while book is None:
+            for i in range(0, 2):  # lean 2x30 deg = 60 deg right
+                self.blink()
+                self.moveTo(0, 0, np.pi / 6)
+                img = self.take_photo(resolution="640*480", return_numpy=True)
+                book = self.find_book(img)
+                if book:
+                    return book
+
+            # reset position
+            self.moveTo(0, 0, 2 / 6 * np.pi)
+
+            for i in range(0, 2):
+                self.blink()
+                self.moveTo(0, 0, np.pi / 6)
+                img = self.take_photo(resolution="640*480", return_numpy=True)
+                book = self.find_book(img)
+                if book:
+                    return book
+            self.moveTo(0, 0, -2 / 6 * np.pi)
+            self.moveTo(0, 0.5, 0)
+            book = self.find_book(img)
+        return book
+
+    def find_book(self, img, threshold=0.2):
+        res = self.im_detect.detect(img, None)
+        res = list(filter(lambda o: o[2] > threshold, res))
+        res.sort(key=lambda o: o[2], reverse=True)
+
+        return None if len(res) == 0 else ImageBook(img, res[-1][0], res[-1][1], res[-1][2], res[-1][3])
 
     def on_book_not_found(self):
         # type: () -> None
@@ -195,19 +234,23 @@ class NAOLibrarian(object):
         cv2.imwrite(file_path, np_arr)
         return file_path
 
-    def take_photo(self):
+    def take_photo(self, resolution="1280*960", return_numpy=False):
+
         resolutions = {
             "1280*960": 3,
             "640*480": 2,
             "320*240": 1
         }
+
+        resolution = "320*240" if resolution not in resolutions else resolution
+
         color_space = 11  # BGR=13, RGB=11
 
-        lower_camera = self.video_device.subscribeCamera("kBottomCamera", 1, resolutions["1280*960"], color_space,
+        lower_camera = self.video_device.subscribeCamera("kBottomCamera", 1, resolutions[resolution], color_space,
                                                          fps=30)
         image = self.video_device.getImageRemote(lower_camera)
         self.video_device.unsubscribe(lower_camera)
-        return image
+        return image[6] if return_numpy else image
 
     def send_photo_to_server(self, photo_path):
         # type: (str) -> BookInfo or None

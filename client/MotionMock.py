@@ -4,15 +4,17 @@ import time
 import numpy as np
 from naoqi import ALProxy
 
-def blink(proxy,flag):
-    if(flag):
-        proxy.fadeRgb('FaceLeds','#E5FFCC',0.5)
+
+def blink(proxy, flag):
+    if (flag):
+        proxy.fadeRgb('FaceLeds', '#E5FFCC', 0.5)
     else:
-        proxy.fadeRgb('FaceLeds','#7F00FF',0.5)
+        proxy.fadeRgb('FaceLeds', '#7F00FF', 0.5)
     flag = not flag
 
-def findBooks(img,server,threshold=0.2):
-    return False #mock
+
+def findBooks(img, server, threshold=0.2):
+    return False  # mock
     imdetect = server.service("ALIMDetection")
 
     res = imdetect.detect(img, None)
@@ -25,6 +27,7 @@ def findBooks(img,server,threshold=0.2):
         return objects
     return None
 
+
 def takePicture(session):
     vd = session.service("ALVideoDevice")
 
@@ -36,35 +39,34 @@ def takePicture(session):
     nparr = np.frombuffer(im, np.uint8)
     nparr = nparr.reshape(480, 640, 3)
 
-    #cv2.imwrite(expanduser("~") + "/zivs/zivs-task01/cam.png", nparr)
+    # cv2.imwrite(expanduser("~") + "/zivs/zivs-task01/cam.png", nparr)
     return nparr
 
+
 def look_for_book():
-    books = findBooks(img,server)
-    while(books == None):
-        for i in range(0,2):#lean 2x30 deg = 60 deg right
-            blink(led_proxy,flag)
-            motionProxy.post.moveTo(0, 0, np.pi/6)
+    books = findBooks(img, server)
+    while (books == None):
+        for i in range(0, 2):  # lean 2x30 deg = 60 deg right
+            blink(led_proxy, flag)
+            motionProxy.post.moveTo(0, 0, np.pi / 6)
             img = takePicture(session)
-            books = findBooks(img,server)
-            if(books):
+            books = findBooks(img, server)
+            if (books):
                 return books
-        #reset position   
-        motionProxy.post.moveTo(0,0,2/6*np.pi)
-        
-        for i in range(0,2):
-            blink(led_proxy,flag)
-            motionProxy.post.moveTo(0, 0, np.pi/6)
+        # reset position
+        motionProxy.post.moveTo(0, 0, 2 / 6 * np.pi)
+
+        for i in range(0, 2):
+            blink(led_proxy, flag)
+            motionProxy.post.moveTo(0, 0, np.pi / 6)
             img = takePicture(session)
-            books = findBooks(img,server)
-            if(books):
+            books = findBooks(img, server)
+            if (books):
                 return books
-        motionProxy.post.moveTo(0,0,-2/6*np.pi)
-        motionProxy.post.MoveTo(0,0.5,0)
-        books = findBooks(img,server)
-    return books 
-
-
+        motionProxy.post.moveTo(0, 0, -2 / 6 * np.pi)
+        motionProxy.post.MoveTo(0, 0.5, 0)
+        books = findBooks(img, server)
+    return books
 
 
 app = qi.Application()
@@ -80,4 +82,3 @@ motionProxy = session.service("ALMotion")
 led_proxy = session.service("ALLeds")
 flag = True
 img = takePicture(session)
-
