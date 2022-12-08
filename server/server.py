@@ -2,6 +2,7 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 import cgi
 import os
 import easyocr
+import json
 import datetime
 from pprint import pprint
 import requests
@@ -55,6 +56,7 @@ class FileUploadHandler(BaseHTTPRequestHandler):
             print("Rating: " + str(book['averageRating']))
         if 'language' in book.keys():
             print("Language: " + book['language'])
+        return book
 
     def do_POST(self):
         form = cgi.FieldStorage(fp=self.rfile, headers=self.headers, environ={'REQUEST_METHOD':'POST', 'CONTENT_TYPE':self.headers['Content-Type']})
@@ -63,10 +65,15 @@ class FileUploadHandler(BaseHTTPRequestHandler):
             file_name = os.path.basename(file_item.filename)
             with open('./images/img.png', 'wb') as f:
                 f.write(file_item.file.read())
-            self.process_image('./images/img.png')
+            book=self.process_image('./images/img.png')
         # Send a response indicating that the file was uploaded successfully
         self.send_response(200)
         self.end_headers()
+        json_string = json.loads(json.dumps(book))
+        print(json_string)
+        json_modified = {"title": json_string["title"], "Authors": json_string["authors"], "Categories": json_string["categories"]}
+        self.wfile.write(json.dumps(json_modified).encode('utf-8'))
 
 httpd = HTTPServer(('0.0.0.0', 8080), FileUploadHandler)
+print("server started")
 httpd.serve_forever()
