@@ -31,6 +31,8 @@ class NAOLibrarian(object):
         self.position_history = []  # type: list[tuple[float, float, float]]
         self.posture.goToPosture("Stand", 0.5)
         self.touch = self.memory_service.subscriber("TouchChanged")
+        self.tts.say("Ready for work! Touch my head to start.")
+        self.run()
 
     def run(self):
         self.wait_for_starting_touch()
