@@ -18,6 +18,14 @@ class ImageBook(object):
         sorted_books = sorted(books, key=lambda book: abs(book.distance - self.distance))
         return sorted_books[0]
 
+    def __str__(self):
+        return "ImageBook with x: ({}, {}), y: ({}, {}), distance: v{} h{} d{} r{}" \
+            .format(
+            self.xl, self.xr, self.yt, self.yb,
+            round(self.vertical_distance, 2), round(self.horizontal_distance, 2),
+            round(self.distance, 2), round(self.rotation, 2)
+        )
+
 
 class Book(object):
     def __init__(self, image_book):
