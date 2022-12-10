@@ -2,7 +2,6 @@
 
 import qi
 import argparse
-import functools
 import sys
 from nao_librarian import NAOLibrarian
 
@@ -16,7 +15,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     try:
         connection_url = "tcp://" + args.ip + ":" + str(args.port)
-        app = qi.Application(["ReactToTouch", "--qi-url=" + connection_url])
+        app = qi.Application(["Librarian", "--qi-url=" + connection_url])
     except RuntimeError:
         print ("Can't connect to Naoqi at ip \"" + args.ip + "\" on port " + str(args.port) + ".\n"
                                                                                               "Please check your script arguments. Run with -h option for help.")
