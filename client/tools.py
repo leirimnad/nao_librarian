@@ -23,3 +23,11 @@ def get_distance(x_pos, y_pos, img):
     rotation = np.arctan(horizontal_distance / focal_length)
 
     return vertical_distance, horizontal_distance, distance, rotation
+
+
+def save_image(img, file_path):
+    # type: (tuple, str) -> None
+    rgb_image = img[6]
+    np_arr = np.fromstring(rgb_image, np.uint8)
+    # np_arr = np_arr.reshape(960, 1280, 3)
+    cv2.imwrite(file_path, np_arr)
