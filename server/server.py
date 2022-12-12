@@ -6,7 +6,7 @@ import json
 import datetime
 from pprint import pprint
 import requests
-
+from datetime import datetime
 
 class FileUploadHandler(BaseHTTPRequestHandler):
 
@@ -22,22 +22,22 @@ class FileUploadHandler(BaseHTTPRequestHandler):
     def get_text(self,img_path):
         reader = easyocr.Reader(['en', 'cs'])
         print("time")
-        time = datetime.datetime.now()
+        time = datetime.now()
         alnum = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ '
-        result = reader.readtext(img_path, allowlist=alnum, batch_size=25, decoder="wordbeamsearch")
-        print(datetime.datetime.now() - time)
+        result = reader.readtext(img_path, allowlist=alnum, batch_size=100, decoder="wordbeamsearch")
+        print(datetime.now() - time)
         result = list(map(lambda x: [x[1], self.get_polygon_area([x[0][0], x[0][1], x[0][2], x[0][3]])], result))
         result.sort(key=lambda x: x[1], reverse=True)
         pprint(result)
         return result[0][0]
 
     def process_image(self,img_path):
-        reader = easyocr.Reader(['en', 'cs'])
+        reader = easyocr.Reader(['en', 'cs'],gpu=True)
         print("time")
-        time = datetime.datetime.now()
+        time = datetime.now()
         alnum = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ '
         result = reader.readtext(img_path, allowlist=alnum, batch_size=10, decoder="wordbeamsearch")
-        print(datetime.datetime.now() - time)
+        print(datetime.now() - time)
         result = list(map(lambda x: [x[1], self.get_polygon_area([x[0][0], x[0][1], x[0][2], x[0][3]])], result))
         result.sort(key=lambda x: x[1], reverse=True)
         pprint(result)
@@ -70,30 +70,28 @@ class FileUploadHandler(BaseHTTPRequestHandler):
         return book
 
     def do_POST(self):
+        filename = datetime.now().strftime("%d-%m-%Y %H-%M-%S")+".jpg"
         form = cgi.FieldStorage(fp=self.rfile, headers=self.headers, environ={'REQUEST_METHOD':'POST', 'CONTENT_TYPE':self.headers['Content-Type']})
         file_item = None
         print(self.path)
         if self.path == '/cover':
             print ("RECOGNISE COVER")
             file_item = form['file']
-            if file_item is not None:
-                if file_item.filename:
-                    file_name = os.path.basename(file_item.filename)
-                    with open('./images/img.png', 'wb') as f:
-                        f.write(file_item.file.read())
-                    book=self.process_image('./images/img.png')
-                # Send a response indicating that the file was uploaded successfully
-                self.send_response(200)
-                self.end_headers()
-                json_string = json.loads(json.dumps(book))
-                print(json_string)
-                json_modified = {"title": json_string["title"], "Authors": json_string["authors"], "Categories": json_string["categories"]}
-                self.wfile.write(json.dumps(json_modified).encode('utf-8'))
+            with open('./images/'+filename, 'wb') as f:
+                f.write(file_item.file.read())
+            book=self.process_image('./images/img.png')
+            # Send a response indicating that the file was uploaded successfully
+            self.send_response(200)
+            self.end_headers()
+            json_string = json.loads(json.dumps(book))
+            print(json_string)
+            json_modified = {"title": json_string["title"], "Authors": json_string["authors"], "Categories": json_string["categories"]}
+            self.wfile.write(json.dumps(json_modified).encode('utf-8'))
         elif self.path == '/category':
             print("RECOGNISE TEXT")
-            with open('./images/text.png', 'wb') as f:
-                f.write(form['text'].file.read())
-            category=self.get_text('./images/text.png')
+            with open('./images/'+filename, 'wb') as f:
+                f.write(form['file'].file.read())
+            category=self.get_text('./images/'+filename)
             self.send_response(200)
             self.end_headers()
             print(f"category is {category}")
