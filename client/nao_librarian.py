@@ -11,6 +11,8 @@ from datetime import datetime
 import pprint
 from tools import *
 from perspective_warp import get_warped_image
+from random import shuffle
+from time import sleep
 
 logging.basicConfig(
     format='%(asctime)s %(message)s',
@@ -58,6 +60,7 @@ class NAOLibrarian(object):
         self.posture.goToPosture("Stand", 0.5)
         self.touch = self.memory_service.subscriber("TouchChanged")
         self.tts.say("Ready for work! Touch my head to start.")
+        self.ocr_request = None
 
         logging.info("Initialization finished")
         self.run()
@@ -327,7 +330,29 @@ class NAOLibrarian(object):
 
         logging.info("Sending photo to server")
 
-        response = requests.post(self.ocr_server_address, files={"book": open(photo_path, "rb")})
+        def decorate_sending_photo(ctx):
+            phrases = [
+                "Hmmm...",
+                "Let me think...",
+                "What book is this?",
+                "That's probably...",
+                "Hmm...",
+                "Ehh?"
+            ]
+            shuffle(phrases)
+            it = 0
+            while ctx.ocr_request is None or ctx.ocr_request.status_code is None:
+                logging.info("Decorating sending photo, iteration {}".format(it))
+                ctx.tts.say(phrases[it % len(phrases)])
+                it += 1
+                sleep(4)
+            ctx.ocr_request = None
+
+        qi.async(decorate_sending_photo, self)
+
+        self.ocr_request = requests.post(self.ocr_server_address, files={"book": open(photo_path, "rb")})
+        response = self.ocr_request
+
         if response.status_code != 200:
             logging.error("Server returned status code: {}, text: {}".format(response.status_code, response.text))
             return None
