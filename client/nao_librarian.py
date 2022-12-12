@@ -1,5 +1,5 @@
 # coding=utf-8
-from __future__ import *
+from __future__ import division, print_function, unicode_literals
 import copy
 from book import Book, BookInfo, ImageBook
 import numpy as np
@@ -48,12 +48,6 @@ class NAOLibrarian(object):
         self.posture = session.service("ALRobotPosture")
         self.leds = session.service("ALLeds")
         self.blink_flag = False
-
-        # ALIMDetection
-        self.rec_server = qi.Session()
-        self.rec_server.connect(rec_server_address)
-        self.im_detect = self.rec_server.service("ALIMDetection")
-
         session.service("ALNavigation")
         self.rec_server_address = rec_server_address
         self.position_history = []  # list[tuple[float, float, float]]
@@ -179,6 +173,11 @@ class NAOLibrarian(object):
 
     def find_book_mock(self, img, threshold=0.2):
         logging.info("MOCK object detection used")
+        # ALIMDetection
+        self.rec_server = qi.Session()
+        self.rec_server.connect(rec_server_address)
+        self.im_detect = self.rec_server.service("ALIMDetection")
+
         filename = datetime.now().strftime("%d-%m-%Y %H-%M-%S")+".jpg"
         save_image(img, filename)
         logging.info("Image saved to {}".format(filename))
