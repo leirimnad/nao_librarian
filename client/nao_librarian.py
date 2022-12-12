@@ -215,6 +215,7 @@ class NAOLibrarian(object):
         # type: (Book) -> None
         x = round(book.image_book.vertical_distance/100, 4)
         y = round(book.image_book.horizontal_distance/100, 4)
+        x, y, _ = self.get_position_relative_to_robot(x, y, 0)
         logging.debug("Pointing RARm to {}".format([x, y, 0]))
         self.tracker.pointAt("RArm", [x, y, 0], 1, 0.1)
         self.tts.say("Book found!")
@@ -295,6 +296,10 @@ class NAOLibrarian(object):
         self.position_history.append(self.motion.getRobotPosition(True))
         self.motion.moveTo(x, y, theta)
 
+    def get_position_relative_to_robot(self, x, y, theta):
+        cx, cy, ct = self.motion.getRobotPosition(True)
+        return cx-x, cy-y, ct-theta
+
     def change_posture_for_photo(self):
         # type: () -> None
         logging.info("Changing posture for photo")
@@ -306,10 +311,7 @@ class NAOLibrarian(object):
         # type: () -> str
         file_path = "./run/cover.png"
 
-        rgb_image_ = self.take_photo()
-        rgb_image = rgb_image_[6]
-        np_arr = np.fromstring(rgb_image, np.uint8)
-        np_arr = np_arr.reshape(960, 1280, 3)
+        np_arr = self.take_photo(return_numpy=True)
         warped_image = get_warped_image(np_arr)
         result = warped_image if warped_image is not None else np_arr
         cv2.imwrite(file_path, result)
@@ -330,11 +332,8 @@ class NAOLibrarian(object):
 
         lower_camera = self.video_device.subscribeCamera("kBottomCamera", 1, resolutions[resolution][0], color_space, 30)
         image = self.video_device.getImageRemote(lower_camera)
-        im = image[6]
-        nparr = np.frombuffer(im, np.uint8)
-        nparr = nparr.reshape(resolution[2], resolution[1], 3)
         self.video_device.unsubscribe(lower_camera)
-        return nparr if return_numpy else image
+        return nparr_from_image(image) if return_numpy else image
 
     def send_photo_to_server(self, photo_path):
         # type: (str) -> BookInfo or None
