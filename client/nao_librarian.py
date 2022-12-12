@@ -41,7 +41,7 @@ class NAOLibrarian(object):
         self.memory_service = session.service("ALMemory")
         self.tts = session.service("ALTextToSpeech")
         self.tts.setLanguage("English")
-        self.tts.setVolume(0.05)
+        self.tts.setVolume(0.3)
         self.motion = session.service("ALMotion")
         self.video_device = session.service("ALVideoDevice")
         self.tracker = session.service("ALTracker")
@@ -176,10 +176,9 @@ class NAOLibrarian(object):
         filename = datetime.now().strftime("%d-%m-%Y %H-%M-%S")+".jpg"
         save_image(img, filename)
         logging.info("Image saved to {}".format(filename))
-        np_arr = np.fromstring(img[6], np.uint8)
-        img_width = np_arr.shape[1]
-        img_height = np_arr.shape[0]
-        return ImageBook(img, int(img_width*0.4), int(img_width*0.6), int(img_height*0.7), int(img_height*0.8))
+        img_width = img[0]
+        img_height = img[1]
+        return ImageBook(nparr_from_image(img), int(img_width*0.4), int(img_width*0.6), int(img_height*0.7), int(img_height*0.8))
 
     def find_book(self, img, threshold=0.2):
         logging.info("Object detection requested")
@@ -214,8 +213,10 @@ class NAOLibrarian(object):
 
     def book_found_decorations(self, book):
         # type: (Book) -> None
-        logging.debug("Pointing RARm to {}".format([book.image_book.x, book.image_book.y, 0]))
-        self.tracker.pointAt("RArm", [book.image_book.x, book.image_book.y, 0], 1, 0.1)
+        x = round(book.image_book.vertical_distance/100, 4)
+        y = round(book.image_book.horizontal_distance/100, 4)
+        logging.debug("Pointing RARm to {}".format([x, y, 0]))
+        self.tracker.pointAt("RArm", [x, y, 0], 1, 0.1)
         self.tts.say("Book found!")
 
     def go_to_book(self, book):
