@@ -290,6 +290,7 @@ class NAOLibrarian(object):
 
     def moveTo(self, x, y, theta):
         # type: (float, float, float) -> None
+        x, y, theta = round(x, 6), round(y, 6), round(theta, 6)
         logging.debug("Moving to: x={}, y={}, theta={}".format(x, y, theta))
         self.position_history.append(self.motion.getRobotPosition(True))
         self.motion.moveTo(x, y, theta)
