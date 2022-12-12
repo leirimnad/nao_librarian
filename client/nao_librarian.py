@@ -321,13 +321,35 @@ class NAOLibrarian(object):
         nparr = nparr.reshape(480, 640, 3)
         self.video_device.unsubscribe(lower_camera)
         return nparr if return_numpy else image
-
+    def decorate_sending_photo(ctx):
+            phrases = [
+                "Hmmm...",
+                "Let me think...",
+                "What book is this?",
+                "That's probably...",
+                "Hmm...",
+                "Ehh?"
+            ]
+            shuffle(phrases)
+            it = 0
+            while ctx.ocr_request is None or ctx.ocr_request.status_code is None:
+                logging.info("Decorating sending photo, iteration {}".format(it))
+                ctx.tts.say(phrases[it % len(phrases)])
+                it += 1
+                sleep(4)
+            ctx.ocr_request = None
     def send_photo_to_server(self, photo_path):
         # type: (str) -> BookInfo or None
 
         logging.info("Sending photo to server")
 
         response = requests.post(self.ocr_server_address+'/cover', files={"file": open(photo_path, "rb")})
+             
+        qi.async(decorate_sending_photo, self)
+
+        self.ocr_request = requests.post(self.ocr_server_address, files={"book": open(photo_path, "rb")})
+        response = self.ocr_request
+
         if response.status_code != 200:
             logging.error("Server returned status code: {}, text: {}".format(response.status_code, response.text))
             return None
@@ -410,3 +432,5 @@ class NAOLibrarian(object):
         # type: (BookInfo) -> None
         self.tts.say("I did not find the right box to put this book in")
         self.tts.say("There are no boxes for categories like: " + ", ".join(book_info.categories))
+
+
