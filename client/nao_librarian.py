@@ -173,11 +173,6 @@ class NAOLibrarian(object):
 
     def find_book_mock(self, img, threshold=0.2):
         logging.info("MOCK object detection used")
-        # ALIMDetection
-        self.rec_server = qi.Session()
-        self.rec_server.connect(rec_server_address)
-        self.im_detect = self.rec_server.service("ALIMDetection")
-
         filename = datetime.now().strftime("%d-%m-%Y %H-%M-%S")+".jpg"
         save_image(img, filename)
         logging.info("Image saved to {}".format(filename))
