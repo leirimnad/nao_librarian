@@ -9,6 +9,7 @@ import logging
 from datetime import datetime
 import pprint
 from tools import *
+from perspective_warp import get_warped_image
 
 logging.basicConfig(
     format='%(asctime)s %(message)s',
@@ -292,7 +293,9 @@ class NAOLibrarian(object):
         rgb_image = rgb_image_[6]
         np_arr = np.fromstring(rgb_image, np.uint8)
         np_arr = np_arr.reshape(960, 1280, 3)
-        cv2.imwrite(file_path, np_arr)
+        warped_image = get_warped_image(np_arr)
+        result = warped_image if warped_image is not None else np_arr
+        cv2.imwrite(file_path, result)
         logging.info("Book photo saved to {}".format(file_path))
         return file_path
 
