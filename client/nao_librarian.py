@@ -1,4 +1,5 @@
 # coding=utf-8
+from __future__ import *
 import copy
 from book import Book, BookInfo, ImageBook
 import numpy as np
@@ -10,6 +11,8 @@ from datetime import datetime
 import pprint
 from tools import *
 from perspective_warp import get_warped_image
+from random import shuffle
+from time import sleep
 
 logging.basicConfig(
     format='%(asctime)s %(message)s',
@@ -45,12 +48,19 @@ class NAOLibrarian(object):
         self.posture = session.service("ALRobotPosture")
         self.leds = session.service("ALLeds")
         self.blink_flag = False
+
+        # ALIMDetection
+        self.rec_server = qi.Session()
+        self.rec_server.connect(rec_server_address)
+        self.im_detect = self.rec_server.service("ALIMDetection")
+
         session.service("ALNavigation")
         self.rec_server_address = rec_server_address
         self.position_history = []  # list[tuple[float, float, float]]
         self.posture.goToPosture("Stand", 0.5)
         self.touch = self.memory_service.subscriber("TouchChanged")
         self.tts.say("Ready for work! Touch my head to start.")
+        self.ocr_request = None
 
         logging.info("Initialization finished")
         self.run()
@@ -198,7 +208,7 @@ class NAOLibrarian(object):
         if len(res) == 0:
             logging.info("No book found")
 
-        filename = datetime.now().strftime("%d-%m-%Y %H-%M-%S")+".jpg"
+        filename = datetime.now().strftime("%d-%m-%Y %H-%M-%S") + ".jpg"
         save_image(img, filename)
         logging.info("Image saved to {}".format(filename))
 
@@ -217,24 +227,23 @@ class NAOLibrarian(object):
     def go_to_book(self, book):
         # type: (Book) -> None
         logging.info("Going to book")
-        self.move_with_stops(book, self.look_for_book)
+        self.move_with_stops(book.image_book, self.look_for_book)
         self.change_posture_for_photo()
 
-    def move_to_book(self, book):
-        # type: (NAOLibrarian, Book) -> None
+    def move_to_book(self, image_book):
+        # type: (NAOLibrarian, ImageBook) -> None
 
-        logging.info("Moving to book: " + str(book))
+        logging.info("Moving to book: " + str(image_book))
 
         self.moveTo(
-            book.image_book.vertical_distance / 100 - self.foot_len,
-            (-1) * book.image_book.horizontal_distance / 100 - self.foot_len,
-            -1 * book.image_book.angle
+            image_book.vertical_distance / 100 - self.foot_len,
+            (-1) * image_book.horizontal_distance / 100 - self.foot_len,
+            -1 * image_book.rotation
         )
 
-    def move_with_stops(self, book, book_func, stops=None, safe_distance=50, min_step_distance=30):
-        # type: (NAOLibrarian, Book, callable, int, int, int) -> None
-        image_book = book.image_book
-        distance_with_stops = max(0, book.distance - safe_distance)
+    def move_with_stops(self, image_book, book_func, stops=None, safe_distance=50, min_step_distance=30):
+        # type: (NAOLibrarian, ImageBook, callable, int, int, int) -> None
+        distance_with_stops = max(0, image_book.distance - safe_distance)
 
         logging.info("Moving with stops to book: {}".format(image_book))
 
@@ -247,25 +256,25 @@ class NAOLibrarian(object):
             logging.info("Too many stops ({}), reducing to {}".format(old_stops, stops))
 
         if stops == 0:
-            self.move_to_book(book)
+            self.move_to_book(image_book)
             return
 
         safe_point_mult = distance_with_stops / image_book.distance
         part_mult = 1.0 / stops
         stop_mult = safe_point_mult * part_mult
 
-        logging.info("Moving to book: " + str(book) + ", stops left:" + str(stops))
+        logging.info("Moving to book: " + str(image_book) + ", stops left:" + str(stops))
 
         self.moveTo(
             (image_book.vertical_distance / 100 - self.foot_len) * stop_mult,
             ((-1) * image_book.horizontal_distance / 100 - self.foot_len) * stop_mult,
-            (-1 * image_book.angle) * stop_mult
+            (-1 * image_book.rotation) * stop_mult
         )
 
         if stops <= 0:
             return
 
-        ideal_image_book = copy.copy(image_book)
+        ideal_image_book = copy.copy(image_book)  # type: ImageBook
         ideal_image_book.distance = image_book.distance * (1 - stop_mult)
         ideal_image_book.vertical_distance = image_book.vertical_distance * (1 - stop_mult)
         ideal_image_book.horizontal_distance = image_book.horizontal_distance * (1 - stop_mult)
@@ -277,7 +286,7 @@ class NAOLibrarian(object):
             return
 
         return self.move_with_stops(
-            book=same_book,
+            image_book=same_book,
             book_func=book_func,
             stops=stops - 1,
             safe_distance=safe_distance,
@@ -330,7 +339,13 @@ class NAOLibrarian(object):
         nparr = nparr.reshape(480, 640, 3)
         self.video_device.unsubscribe(lower_camera)
         return nparr if return_numpy else image
-    def decorate_sending_photo(ctx):
+
+    def send_photo_to_server(self, photo_path):
+        # type: (str) -> BookInfo or None
+
+        logging.info("Sending photo to server")
+
+        def decorate_sending_photo(ctx):
             phrases = [
                 "Hmmm...",
                 "Let me think...",
@@ -347,13 +362,7 @@ class NAOLibrarian(object):
                 it += 1
                 sleep(4)
             ctx.ocr_request = None
-    def send_photo_to_server(self, photo_path):
-        # type: (str) -> BookInfo or None
 
-        logging.info("Sending photo to server")
-
-        response = requests.post(self.ocr_server_address+'/cover', files={"file": open(photo_path, "rb")})
-             
         qi.async(decorate_sending_photo, self)
 
         self.ocr_request = requests.post(self.ocr_server_address, files={"book": open(photo_path, "rb")})
@@ -405,10 +414,10 @@ class NAOLibrarian(object):
 
         text = self.get_text_from_image(self.take_photo())
         logging.info("Text from image: " + text)
-        #if text is None or not text.startswith("NAOBox:"):
-            #logging.warn("Text is None or does not start with NAOBox:")
-            #self.tts.say("I did not find the box in the box area")
-            #return None
+        if text is None or not text.startswith("NAOBox:"):
+            logging.warn("Text is None or does not start with NAOBox:")
+            self.tts.say("I did not find the box in the box area")
+            return None
 
         if book_info.aligns_with_category(text):
             logging.info("Book aligns with category")
@@ -441,5 +450,3 @@ class NAOLibrarian(object):
         # type: (BookInfo) -> None
         self.tts.say("I did not find the right box to put this book in")
         self.tts.say("There are no boxes for categories like: " + ", ".join(book_info.categories))
-
-
