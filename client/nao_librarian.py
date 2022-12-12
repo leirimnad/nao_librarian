@@ -319,20 +319,20 @@ class NAOLibrarian(object):
     def take_photo(self, resolution="1280*960", return_numpy=False):
 
         resolutions = {
-            "1280*960": 3,
-            "640*480": 2,
-            "320*240": 1
+            "1280*960": (3,1280,930),
+            "640*480": (2,640,480),
+            "320*240": (1,320,240)
         }
 
-        resolution = "320*240" if resolution not in resolutions else resolution
+        resolution = (1,320,240) if resolution not in resolutions else resolution
 
         color_space = 11  # BGR=13, RGB=11
 
-        lower_camera = self.video_device.subscribeCamera("kBottomCamera", 1, resolutions[resolution], color_space, 30)
+        lower_camera = self.video_device.subscribeCamera("kBottomCamera", 1, resolutions[resolution][0], color_space, 30)
         image = self.video_device.getImageRemote(lower_camera)
         im = image[6]
         nparr = np.frombuffer(im, np.uint8)
-        nparr = nparr.reshape(480, 640, 3)
+        nparr = nparr.reshape(resolution[2], resolution[1], 3)
         self.video_device.unsubscribe(lower_camera)
         return nparr if return_numpy else image
 
