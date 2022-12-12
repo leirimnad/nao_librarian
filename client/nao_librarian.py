@@ -173,7 +173,7 @@ class NAOLibrarian(object):
 
     def find_book_mock(self, img, threshold=0.2):
         logging.info("MOCK object detection used")
-        filename = datetime.now().strftime("%d-%m-%Y %H-%M-%S")+".jpg"
+        filename = "./logs/"+datetime.now().strftime("%d-%m-%Y %H-%M-%S")+".jpg"
         save_image(img, filename)
         logging.info("Image saved to {}".format(filename))
         img_width = img[0]
