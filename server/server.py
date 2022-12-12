@@ -7,8 +7,9 @@ import datetime
 from pprint import pprint
 import requests
 from datetime import datetime
-
+    
 class FileUploadHandler(BaseHTTPRequestHandler):
+    reader = easyocr.Reader(['en', 'cs'],gpu=True)
 
     def get_polygon_area(self,polygon):
         """Calculate the area of a polygon."""
@@ -20,11 +21,10 @@ class FileUploadHandler(BaseHTTPRequestHandler):
         area = abs(area) / 2.0
         return area
     def get_text(self,img_path):
-        reader = easyocr.Reader(['en', 'cs'])
         print("time")
         time = datetime.now()
         alnum = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ '
-        result = reader.readtext(img_path, allowlist=alnum, batch_size=100, decoder="wordbeamsearch")
+        result = self.reader.readtext(img_path, allowlist=alnum, batch_size=200,workers=4, decoder="wordbeamsearch")
         print(datetime.now() - time)
         result = list(map(lambda x: [x[1], self.get_polygon_area([x[0][0], x[0][1], x[0][2], x[0][3]])], result))
         result.sort(key=lambda x: x[1], reverse=True)
@@ -32,11 +32,10 @@ class FileUploadHandler(BaseHTTPRequestHandler):
         return result[0][0]
 
     def process_image(self,img_path):
-        reader = easyocr.Reader(['en', 'cs'],gpu=True)
         print("time")
         time = datetime.now()
         alnum = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ '
-        result = reader.readtext(img_path, allowlist=alnum, batch_size=10, decoder="wordbeamsearch")
+        result = self.reader.readtext(img_path, allowlist=alnum, batch_size=200,workers=4, decoder="wordbeamsearch")
         print(datetime.now() - time)
         result = list(map(lambda x: [x[1], self.get_polygon_area([x[0][0], x[0][1], x[0][2], x[0][3]])], result))
         result.sort(key=lambda x: x[1], reverse=True)
@@ -75,7 +74,7 @@ class FileUploadHandler(BaseHTTPRequestHandler):
         file_item = None
         print(self.path)
         if self.path == '/cover':
-            print ("RECOGNISE COVER")
+            print (f"RECOGNISE COVER from {self.client_address[0]}")
             file_item = form['file']
             with open('./images/'+filename, 'wb') as f:
                 f.write(file_item.file.read())
@@ -88,7 +87,7 @@ class FileUploadHandler(BaseHTTPRequestHandler):
             json_modified = {"title": json_string["title"], "Authors": json_string["authors"], "Categories": json_string["categories"]}
             self.wfile.write(json.dumps(json_modified).encode('utf-8'))
         elif self.path == '/category':
-            print("RECOGNISE TEXT")
+            print (f"RECOGNISE CATEGORY from {self.client_address[0]}")
             with open('./images/'+filename, 'wb') as f:
                 f.write(form['file'].file.read())
             category=self.get_text('./images/'+filename)
