@@ -1,4 +1,5 @@
 # coding=utf-8
+from __future__ import *
 import copy
 from book import Book, BookInfo, ImageBook
 import numpy as np
