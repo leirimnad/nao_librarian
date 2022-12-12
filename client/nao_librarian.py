@@ -362,8 +362,8 @@ class NAOLibrarian(object):
             ctx.ocr_request = None
 
         qi.async(decorate_sending_photo, self)
-
-        self.ocr_request = requests.post(self.ocr_server_address+"/cover", files={"file": open(photo_path, "rb")})
+        with open(photo_path, "rb") s f:
+            self.ocr_request = requests.post(self.ocr_server_address+"/cover", files={"file": f})
         response = self.ocr_request
 
         if response.status_code != 200:
@@ -433,7 +433,8 @@ class NAOLibrarian(object):
     def get_text_from_image(self, image_path):
         # type: (str) -> ...
         logging.info("Requesting OCR for image {}".format(image_path))
-        response = requests.post(self.ocr_server_address+'/category', files={"file": open(image_path, "rb")})
+        with open(image_path, "rb") as f:
+            response = requests.post(self.ocr_server_address+'/category', files={"file": f})
         if response.status_code != 200:
             logging.error("Server returned status code: {}, text: {}".format(response.status_code, response.text))
             return None
