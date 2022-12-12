@@ -327,7 +327,7 @@ class NAOLibrarian(object):
 
         logging.info("Sending photo to server")
 
-        response = requests.post(self.ocr_server_address, files={"book": open(photo_path, "rb")})
+        response = requests.post(self.ocr_server_address+'/cover', files={"file": open(photo_path, "rb")})
         if response.status_code != 200:
             logging.error("Server returned status code: {}, text: {}".format(response.status_code, response.text))
             return None
@@ -374,10 +374,10 @@ class NAOLibrarian(object):
 
         text = self.get_text_from_image(self.take_photo())
         logging.info("Text from image: " + text)
-        if text is None or not text.startswith("NAOBox:"):
-            logging.warn("Text is None or does not start with NAOBox:")
-            self.tts.say("I did not find the box in the box area")
-            return None
+        #if text is None or not text.startswith("NAOBox:"):
+            #logging.warn("Text is None or does not start with NAOBox:")
+            #self.tts.say("I did not find the box in the box area")
+            #return None
 
         if book_info.aligns_with_category(text):
             logging.info("Book aligns with category")
@@ -395,12 +395,12 @@ class NAOLibrarian(object):
     def get_text_from_image(self, image_path):
         # type: (str) -> ...
         logging.info("Requesting OCR for image {}".format(image_path))
-        response = requests.post(self.ocr_server_address, files={"image": open(image_path, "rb")})
+        response = requests.post(self.ocr_server_address+'/category', files={"file": open(image_path, "rb")})
         if response.status_code != 200:
             logging.error("Server returned status code: {}, text: {}".format(response.status_code, response.text))
             return None
         logging.debug("Server returned: \n{}".format(pprint.pformat(response.json())))
-        return response.json()["text"]
+        return response.json()["category"]
 
     def box_found_decorations(self, book_info, box_category):
         # type: (BookInfo, str) -> None
