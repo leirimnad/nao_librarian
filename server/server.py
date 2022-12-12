@@ -24,7 +24,7 @@ class FileUploadHandler(BaseHTTPRequestHandler):
         print("time")
         time = datetime.now()
         alnum = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ '
-        result = self.reader.readtext(img_path, allowlist=alnum, batch_size=100,workers=2, decoder="wordbeamsearch")
+        result = self.reader.readtext(img_path, allowlist=alnum, batch_size=200,workers=4, decoder="wordbeamsearch")
         print(datetime.now() - time)
         result = list(map(lambda x: [x[1], self.get_polygon_area([x[0][0], x[0][1], x[0][2], x[0][3]])], result))
         result.sort(key=lambda x: x[1], reverse=True)
@@ -35,7 +35,7 @@ class FileUploadHandler(BaseHTTPRequestHandler):
         print("time")
         time = datetime.now()
         alnum = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ '
-        result = self.reader.readtext(img_path, allowlist=alnum, batch_size=100,workers=2, decoder="wordbeamsearch")
+        result = self.reader.readtext(img_path, allowlist=alnum, batch_size=200,workers=4, decoder="wordbeamsearch")
         print(datetime.now() - time)
         result = list(map(lambda x: [x[1], self.get_polygon_area([x[0][0], x[0][1], x[0][2], x[0][3]])], result))
         result.sort(key=lambda x: x[1], reverse=True)
@@ -87,7 +87,7 @@ class FileUploadHandler(BaseHTTPRequestHandler):
             json_modified = {"title": json_string["title"], "Authors": json_string["authors"], "Categories": json_string["categories"]}
             self.wfile.write(json.dumps(json_modified).encode('utf-8'))
         elif self.path == '/category':
-            print (f"RECOGNISE COVER from {self.client_address[0]}")
+            print (f"RECOGNISE CATEGORY from {self.client_address[0]}")
             with open('./images/'+filename, 'wb') as f:
                 f.write(form['file'].file.read())
             category=self.get_text('./images/'+filename)
