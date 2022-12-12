@@ -14,7 +14,7 @@ from perspective_warp import get_warped_image
 logging.basicConfig(
     format='%(asctime)s %(message)s',
     datefmt='%H:%M:%S',
-    filename="logs/"+datetime.now().strftime("%d-%m-%Y %H-%M-%S") + '.log',
+    filename="logs/" + datetime.now().strftime("%d-%m-%Y %H-%M-%S") + '.log',
     level=logging.DEBUG
 )
 logging.getLogger().addHandler(logging.StreamHandler())
@@ -189,7 +189,7 @@ class NAOLibrarian(object):
         if len(res) == 0:
             logging.info("No book found")
 
-        filename = datetime.now().strftime("%d-%m-%Y %H-%M-%S")+".jpg"
+        filename = datetime.now().strftime("%d-%m-%Y %H-%M-%S") + ".jpg"
         save_image(img, filename)
         logging.info("Image saved to {}".format(filename))
 
@@ -208,24 +208,23 @@ class NAOLibrarian(object):
     def go_to_book(self, book):
         # type: (Book) -> None
         logging.info("Going to book")
-        self.move_with_stops(book, self.look_for_book)
+        self.move_with_stops(book.image_book, self.look_for_book)
         self.change_posture_for_photo()
 
-    def move_to_book(self, book):
-        # type: (NAOLibrarian, Book) -> None
+    def move_to_book(self, image_book):
+        # type: (NAOLibrarian, ImageBook) -> None
 
-        logging.info("Moving to book: " + str(book))
+        logging.info("Moving to book: " + str(image_book))
 
         self.moveTo(
-            book.image_book.vertical_distance / 100 - self.foot_len,
-            (-1) * book.image_book.horizontal_distance / 100 - self.foot_len,
-            -1 * book.image_book.angle
+            image_book.vertical_distance / 100 - self.foot_len,
+            (-1) * image_book.horizontal_distance / 100 - self.foot_len,
+            -1 * image_book.rotation
         )
 
-    def move_with_stops(self, book, book_func, stops=None, safe_distance=50, min_step_distance=30):
-        # type: (NAOLibrarian, Book, callable, int, int, int) -> None
-        image_book = book.image_book
-        distance_with_stops = max(0, book.distance - safe_distance)
+    def move_with_stops(self, image_book, book_func, stops=None, safe_distance=50, min_step_distance=30):
+        # type: (NAOLibrarian, ImageBook, callable, int, int, int) -> None
+        distance_with_stops = max(0, image_book.distance - safe_distance)
 
         logging.info("Moving with stops to book: {}".format(image_book))
 
@@ -238,25 +237,25 @@ class NAOLibrarian(object):
             logging.info("Too many stops ({}), reducing to {}".format(old_stops, stops))
 
         if stops == 0:
-            self.move_to_book(book)
+            self.move_to_book(image_book)
             return
 
         safe_point_mult = distance_with_stops / image_book.distance
         part_mult = 1.0 / stops
         stop_mult = safe_point_mult * part_mult
 
-        logging.info("Moving to book: " + str(book) + ", stops left:" + str(stops))
+        logging.info("Moving to book: " + str(image_book) + ", stops left:" + str(stops))
 
         self.moveTo(
             (image_book.vertical_distance / 100 - self.foot_len) * stop_mult,
             ((-1) * image_book.horizontal_distance / 100 - self.foot_len) * stop_mult,
-            (-1 * image_book.angle) * stop_mult
+            (-1 * image_book.rotation) * stop_mult
         )
 
         if stops <= 0:
             return
 
-        ideal_image_book = copy.copy(image_book)
+        ideal_image_book = copy.copy(image_book)  # type: ImageBook
         ideal_image_book.distance = image_book.distance * (1 - stop_mult)
         ideal_image_book.vertical_distance = image_book.vertical_distance * (1 - stop_mult)
         ideal_image_book.horizontal_distance = image_book.horizontal_distance * (1 - stop_mult)
@@ -268,7 +267,7 @@ class NAOLibrarian(object):
             return
 
         return self.move_with_stops(
-            book=same_book,
+            image_book=same_book,
             book_func=book_func,
             stops=stops - 1,
             safe_distance=safe_distance,
