@@ -43,11 +43,11 @@ class Book(object):
 
 
 class BookInfo(object):
-    def __init__(self, title, author):
+    def __init__(self, title, authors, categories):
         super(BookInfo, self).__init__()
         self.title = title
-        self.author = author
-        self.categories = []
+        self.authors = authors
+        self.categories = categories
 
     def __str__(self):
         return "BookInfo: {} by {}, categories: {}".format(self.title, self.author, ", ".join(self.categories))
@@ -60,4 +60,4 @@ class BookInfo(object):
 
     @classmethod
     def from_json(cls, json_text):
-        return cls(json_text['title'], json_text['author'])
+        return cls(json_text.get('title'), json_text.get('authors'), json_text.get('categories'))

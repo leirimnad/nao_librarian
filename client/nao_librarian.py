@@ -55,6 +55,7 @@ class NAOLibrarian(object):
         self.touch = self.memory_service.subscriber("TouchChanged")
         self.tts.say("Ready for work! Touch my head to start.")
         self.ocr_request = None
+        self.mock_recognition = (rec_server_address == "")
 
         logging.info("Initialization finished")
         self.run()
@@ -135,7 +136,7 @@ class NAOLibrarian(object):
         logging.info("Starting looking for books")
 
         img = self.take_photo(resolution="640*480", return_numpy=False)
-        book = self.find_book_mock(img)
+        book = self.find_book_mock(img) if self.mock_recognition else self.find_book(img)
         while book is None:
 
             logging.info("Book not found")
@@ -303,16 +304,18 @@ class NAOLibrarian(object):
     def change_posture_for_photo(self):
         # type: () -> None
         logging.info("Changing posture for photo")
+        self.posture.goToPosture("Crouch", 1)
         self.motion.setStiffnesses("Head", 1.0)
         self.motion.setAngles("HeadPitch", 0.0, 0.1)
         self.motion.setAngles("HeadYaw", 0.0, 0.1)
 
     def take_book_photo(self):
         # type: () -> str
+        logging.info("Taking book photo")
         file_path = "./run/cover.png"
 
         np_arr = self.take_photo(return_numpy=True)
-        warped_image = get_warped_image(np_arr)
+        warped_image = get_warped_image(np_arr, debug=True)
         result = warped_image if warped_image is not None else np_arr
         cv2.imwrite(file_path, result)
         logging.info("Book photo saved to {}".format(file_path))
@@ -328,7 +331,7 @@ class NAOLibrarian(object):
 
         resolution = "320*240" if resolution not in resolutions else resolution
 
-        color_space = 11  # BGR=13, RGB=11
+        color_space = 13 # BGR=13, RGB=11
 
         lower_camera = self.video_device.subscribeCamera("kBottomCamera", 1, resolutions[resolution], color_space, 30)
         image = self.video_device.getImageRemote(lower_camera)
@@ -360,7 +363,7 @@ class NAOLibrarian(object):
 
         qi.async(decorate_sending_photo, self)
 
-        self.ocr_request = requests.post(self.ocr_server_address, files={"book": open(photo_path, "rb")})
+        self.ocr_request = requests.post(self.ocr_server_address+"/cover", files={"file": open(photo_path, "rb")})
         response = self.ocr_request
 
         if response.status_code != 200:

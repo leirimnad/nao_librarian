@@ -10,7 +10,7 @@ if __name__ == "__main__":
     parser.add_argument("--ip", type=str, help="Robot IP address.", required=True)
     parser.add_argument("--port", type=int, help="Naoqi port number", required=True)
     parser.add_argument("--ocr", type=str, help="OCR server address", required=True)
-    parser.add_argument("--rec", type=str, help="Object recognition server address", required=True)
+    parser.add_argument("--rec", type=str, help="Object recognition server address", required=False, default="")
 
     args = parser.parse_args()
     try:
