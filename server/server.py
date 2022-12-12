@@ -21,22 +21,20 @@ class FileUploadHandler(BaseHTTPRequestHandler):
         area = abs(area) / 2.0
         return area
     def get_text(self,img_path):
-        print("time")
         time = datetime.now()
         alnum = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ '
         result = self.reader.readtext(img_path, allowlist=alnum, batch_size=200,workers=4, decoder="wordbeamsearch")
-        print(datetime.now() - time)
+        print(f"Request took {datetime.now() - time}")
         result = list(map(lambda x: [x[1], self.get_polygon_area([x[0][0], x[0][1], x[0][2], x[0][3]])], result))
         result.sort(key=lambda x: x[1], reverse=True)
         pprint(result)
         return result[0][0]
 
     def process_image(self,img_path):
-        print("time")
         time = datetime.now()
         alnum = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ '
         result = self.reader.readtext(img_path, allowlist=alnum, batch_size=200,workers=4, decoder="wordbeamsearch")
-        print(datetime.now() - time)
+        print(f"Request took {datetime.now() - time}")
         result = list(map(lambda x: [x[1], self.get_polygon_area([x[0][0], x[0][1], x[0][2], x[0][3]])], result))
         result.sort(key=lambda x: x[1], reverse=True)
         pprint(result)
@@ -76,15 +74,15 @@ class FileUploadHandler(BaseHTTPRequestHandler):
         if self.path == '/cover':
             print (f"RECOGNISE COVER from {self.client_address[0]}")
             file_item = form['file']
-            with open('./images/'+filename, 'wb') as f:
+            with open('images/'+filename, 'xb') as f:
                 f.write(file_item.file.read())
-            book=self.process_image('./images/img.png')
+            book=self.process_image('images/'+filename)
             # Send a response indicating that the file was uploaded successfully
             self.send_response(200)
             self.end_headers()
             json_string = json.loads(json.dumps(book))
             print(json_string)
-            json_modified = {"title": json_string["title"], "Authors": json_string["authors"], "Categories": json_string["categories"]}
+            json_modified = {"title": json_string["title"], "authors": json_string["authors"], "categories": json_string["categories"]}
             self.wfile.write(json.dumps(json_modified).encode('utf-8'))
         elif self.path == '/category':
             print (f"RECOGNISE CATEGORY from {self.client_address[0]}")
