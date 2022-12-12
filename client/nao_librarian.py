@@ -38,21 +38,15 @@ class NAOLibrarian(object):
         self.memory_service = session.service("ALMemory")
         self.tts = session.service("ALTextToSpeech")
         self.tts.setLanguage("English")
-        self.tts.setVolume(0.2)
+        self.tts.setVolume(0.05)
         self.motion = session.service("ALMotion")
         self.video_device = session.service("ALVideoDevice")
         self.tracker = session.service("ALTracker")
         self.posture = session.service("ALRobotPosture")
         self.leds = session.service("ALLeds")
         self.blink_flag = False
-
-        # ALIMDetection
-        self.rec_server = qi.Session()
-        self.rec_server.connect(rec_server_address)
-        self.im_detect = self.rec_server.service("ALIMDetection")
-
         session.service("ALNavigation")
-
+        self.rec_server_address = rec_server_address
         self.position_history = []  # list[tuple[float, float, float]]
         self.posture.goToPosture("Stand", 0.5)
         self.touch = self.memory_service.subscriber("TouchChanged")
@@ -137,7 +131,7 @@ class NAOLibrarian(object):
         logging.info("Starting looking for books")
 
         img = self.take_photo(resolution="640*480", return_numpy=False)
-        book = self.find_book(img)
+        book = self.find_book_mock(img)
         while book is None:
 
             logging.info("Book not found")
@@ -173,8 +167,23 @@ class NAOLibrarian(object):
             logging.warn("Book still not found, redoing the cycle")
         return book
 
+    def find_book_mock(self, img, threshold=0.2):
+        logging.info("MOCK object detection used")
+        filename = datetime.now().strftime("%d-%m-%Y %H-%M-%S")+".jpg"
+        save_image(img, filename)
+        logging.info("Image saved to {}".format(filename))
+        np_arr = np.fromstring(img[6], np.uint8)
+        img_width = np_arr.shape[1]
+        img_height = np_arr.shape[0]
+        return ImageBook(img, int(img_width*0.4), int(img_width*0.6), int(img_height*0.7), int(img_height*0.8))
+
     def find_book(self, img, threshold=0.2):
         logging.info("Object detection requested")
+
+        # ALIMDetection
+        self.rec_server = qi.Session()
+        self.rec_server.connect(self.rec_server_address)
+        self.im_detect = self.rec_server.service("ALIMDetection")
 
         res = self.im_detect.detect(img, None)
 
