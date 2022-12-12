@@ -27,7 +27,11 @@ def get_distance(x_pos, y_pos, img):
 
 def save_image(img, file_path):
     # type: (tuple, str) -> None
-    rgb_image = img[6]
-    np_arr = np.fromstring(rgb_image, np.uint8)
-    # np_arr = np_arr.reshape(960, 1280, 3)
+    np_arr = nparr_from_image(img)
     cv2.imwrite(file_path, np_arr)
+
+def nparr_from_image(img):
+    image = img[6]
+    np_arr = np.frombuffer(image, np.uint8)
+    np_arr = np_arr.reshape(img[1], img[0], 3)
+    return np_arr
