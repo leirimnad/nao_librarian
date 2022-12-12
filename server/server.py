@@ -2,10 +2,12 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 import cgi
 import os
 import easyocr
+import cv2
 import json
 import datetime
 from pprint import pprint
 import requests
+import numpy as np
 from datetime import datetime
     
 class FileUploadHandler(BaseHTTPRequestHandler):
@@ -20,11 +22,32 @@ class FileUploadHandler(BaseHTTPRequestHandler):
             area -= polygon[i][1] * polygon[j][0]
         area = abs(area) / 2.0
         return area
+    def prepr(self,img_path):
+        img = cv2.imread(img_path)
+        #resized = cv2.resize(img,(int(img.shape[0]*1.5),int(img.shape[1]*1.5)),interpolation = cv2.INTER_CUBIC)
+        grey = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        #ret = cv2.resize(ret,cv2.INTER_CUBIC, fx=1.5, fy=1.5)
+        thresh = cv2.threshold(grey, 0, 255,
+	    cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
+        dist = cv2.distanceTransform(thresh, cv2.DIST_L2, 5)
+        dist = cv2.normalize(dist, dist, 0, 1.0, cv2.NORM_MINMAX)
+        dist = (dist * 255).astype("uint8")
+        dist = cv2.threshold(dist, 0, 255,
+	cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7, 7))
+        opening = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel)
+        return opening
     def get_text(self,img_path):
         time = datetime.now()
         alnum = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ '
-        result = self.reader.readtext(img_path, allowlist=alnum, batch_size=200,workers=4, decoder="wordbeamsearch")
+        #result = self.reader.readtext(img_path, allowlist=alnum, batch_size=200,workers=4, decoder="wordbeamsearch")
         print(f"Request took {datetime.now() - time}")
+        
+        
+        time = datetime.now()
+        result = self.reader.readtext(self.prepr(img_path),allowlist = alnum,batch_size=200,workers=4,decoder="wordbeamsearch")
+        print(f"Request took {datetime.now() - time}")
+        
         result = list(map(lambda x: [x[1], self.get_polygon_area([x[0][0], x[0][1], x[0][2], x[0][3]])], result))
         result.sort(key=lambda x: x[1], reverse=True)
         pprint(result)
