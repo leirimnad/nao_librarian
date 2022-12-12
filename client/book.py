@@ -21,14 +21,15 @@ class ImageBook(object):
     def __str__(self):
         return "ImageBook with x: ({}, {}), y: ({}, {}), distance: v{} h{} d{} r{}" \
             .format(
-            self.xl, self.xr, self.yt, self.yb,
-            round(self.vertical_distance, 2), round(self.horizontal_distance, 2),
-            round(self.distance, 2), round(self.rotation, 2)
-        )
+                self.xl, self.xr, self.yt, self.yb,
+                round(self.vertical_distance, 2), round(self.horizontal_distance, 2),
+                round(self.distance, 2), round(self.rotation, 2)
+            )
 
 
 class Book(object):
     def __init__(self, image_book):
+        self.info = None
         self.image_book = image_book
         self.x = image_book.vertical_distance
         self.y = image_book.horizontal_distance

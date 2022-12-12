@@ -48,12 +48,12 @@ def get_warped_image(img, debug=False):
             for j in range(i + 1, len(lines)):
                 rho1, theta1 = lines[i][0]
                 rho2, theta2 = lines[j][0]
-                A = np.array([
+                ar_1 = np.array([
                     [np.cos(theta1), np.sin(theta1)],
                     [np.cos(theta2), np.sin(theta2)]
                 ])
-                b = np.array([[rho1], [rho2]])
-                x0, y0 = np.linalg.solve(A, b)
+                ar_2 = np.array([[rho1], [rho2]])
+                x0, y0 = np.linalg.solve(ar_1, ar_2)
                 x0, y0 = int(np.round(x0)), int(np.round(y0))
                 intersection_points.append((x0, y0))
 
@@ -66,18 +66,18 @@ def get_warped_image(img, debug=False):
 
     if debug:
         # Draw lines on the image
-        for line in res_lines:
-            rho, theta = line[0]
-            a = np.cos(theta)
-            b = np.sin(theta)
-            x0 = a * rho
-            y0 = b * rho
-            x1 = int(x0 + 10000 * (-b))
-            y1 = int(y0 + 10000 * (a))
-            x2 = int(x0 - 10000 * (-b))
-            y2 = int(y0 - 10000 * (a))
+        for line_ in res_lines:
+            rho_, theta_ = line_[0]
+            a = np.cos(theta_)
+            b = np.sin(theta_)
+            x0_ = a * rho_
+            y0_ = b * rho_
+            x1_ = int(x0_ + 10000 * (-b))
+            y1_ = int(y0_ + 10000 * a)
+            x2_ = int(x0_ - 10000 * (-b))
+            y2_ = int(y0_ - 10000 * a)
 
-            cv2.line(img, (x1, y1), (x2, y2), (0, 0, 255), 2)
+            cv2.line(img, (x1_, y1_), (x2_, y2_), (0, 0, 255), 2)
 
         # Draw intersection points
         for x, y in res_points:

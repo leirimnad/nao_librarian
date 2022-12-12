@@ -1,7 +1,7 @@
 # coding=utf-8
 
 import numpy as np
-
+import cv2
 
 def get_distance(x_pos, y_pos, img):
     h_fov = 60.97

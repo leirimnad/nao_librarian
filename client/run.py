@@ -17,8 +17,8 @@ if __name__ == "__main__":
         connection_url = "tcp://" + args.ip + ":" + str(args.port)
         app = qi.Application(["Librarian", "--qi-url=" + connection_url])
     except RuntimeError:
-        print ("Can't connect to Naoqi at ip \"" + args.ip + "\" on port " + str(args.port) + ".\n"
-                                                                                              "Please check your script arguments. Run with -h option for help.")
+        print ("Can't connect to Naoqi at ip \"" + args.ip + "\" on port " + str(args.port) + ".\n" +
+               "Please check your script arguments. Run with -h option for help.")
         sys.exit(1)
     react_to_touch = NAOLibrarian(app, args.ocr, args.rec)
     app.run()

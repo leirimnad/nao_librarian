@@ -53,7 +53,7 @@ class NAOLibrarian(object):
 
         session.service("ALNavigation")
 
-        self.position_history = []  # type: list[tuple[float, float, float]]
+        self.position_history = []  # list[tuple[float, float, float]]
         self.posture.goToPosture("Stand", 0.5)
         self.touch = self.memory_service.subscriber("TouchChanged")
         self.tts.say("Ready for work! Touch my head to start.")
@@ -84,10 +84,12 @@ class NAOLibrarian(object):
     def start_script(self):
         # type: () -> None
 
-        book = self.look_for_book()
-        if book is None:
+        image_book = self.look_for_book()
+        if image_book is None:
             self.on_book_not_found()
             return
+
+        book = Book(image_book)
 
         self.book_found_decorations(book)
 
@@ -99,7 +101,7 @@ class NAOLibrarian(object):
         logging.info("Running book scenario")
 
         self.go_to_book(book)
-        photo_path = self.take_book_photo(book)
+        photo_path = self.take_book_photo()
 
         # TODO: async call
         book_info = self.send_photo_to_server(photo_path)
@@ -199,8 +201,9 @@ class NAOLibrarian(object):
 
     def book_found_decorations(self, book):
         # type: (Book) -> None
-        self.tts.say("Book found!")
+        logging.debug("Pointing RARm to {}".format([book.image_book.x, book.image_book.y, 0]))
         self.tracker.pointAt("RArm", [book.image_book.x, book.image_book.y, 0], 1, 0.1)
+        self.tts.say("Book found!")
 
     def go_to_book(self, book):
         # type: (Book) -> None
@@ -211,7 +214,7 @@ class NAOLibrarian(object):
     def move_to_book(self, book):
         # type: (NAOLibrarian, Book) -> None
 
-        print("Moving to book: " + str(book))
+        logging.info("Moving to book: " + str(book))
 
         self.moveTo(
             book.image_book.vertical_distance / 100 - self.foot_len,
@@ -285,8 +288,8 @@ class NAOLibrarian(object):
         self.motion.setAngles("HeadPitch", 0.0, 0.1)
         self.motion.setAngles("HeadYaw", 0.0, 0.1)
 
-    def take_book_photo(self, book):
-        # type: (Book) -> str
+    def take_book_photo(self):
+        # type: () -> str
         file_path = "./run/cover.png"
 
         rgb_image_ = self.take_photo()
