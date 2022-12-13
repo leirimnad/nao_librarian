@@ -66,7 +66,10 @@ class FileUploadHandler(BaseHTTPRequestHandler):
 
         req = requests.get('https://www.googleapis.com/books/v1/volumes',
                         params={'q': str(result[0][0]) + " " + str(result[1][0]), "key": "AIzaSyCL1jiXvWMEBBhu1ulEVSgELE_h84IdpqM"})
-        book_id = req.json()['items'][0]['id']
+        try:
+            book_id = req.json()['items'][0]['id']
+        except:
+            return None
 
         book = requests.get('https://www.googleapis.com/books/v1/volumes/' + book_id,
                         params={"key": "AIzaSyCL1jiXvWMEBBhu1ulEVSgELE_h84IdpqM"}).json()['volumeInfo']
