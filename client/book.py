@@ -50,7 +50,11 @@ class BookInfo(object):
         self.categories = categories
 
     def __str__(self):
-        return "BookInfo: {} by {}, categories: {}".format(self.title, self.author, ", ".join(self.categories))
+        return "BookInfo: {} by {}, categories: {}".format(
+            self.title or "Untitled",
+            ", ".join(self.authors or ["No authors"]),
+            ", ".join(self.categories or "No categories")
+            )
 
     def aligns_with_category(self, category):
         for cat in self.categories:
