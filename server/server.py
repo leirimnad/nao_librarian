@@ -9,7 +9,10 @@ from pprint import pprint
 import requests
 import numpy as np
 from datetime import datetime
-    
+
+def is_ascii(s):
+        return all(ord(c) < 128 for c in s)
+
 class FileUploadHandler(BaseHTTPRequestHandler):
     reader = easyocr.Reader(['en', 'cs'],gpu=True)
 
@@ -22,6 +25,9 @@ class FileUploadHandler(BaseHTTPRequestHandler):
             area -= polygon[i][1] * polygon[j][0]
         area = abs(area) / 2.0
         return area
+
+    
+
     def prepr(self,img_path):
         img = cv2.imread(img_path)
         #resized = cv2.resize(img,(int(img.shape[0]*1.5),int(img.shape[1]*1.5)),interpolation = cv2.INTER_CUBIC)
@@ -37,10 +43,11 @@ class FileUploadHandler(BaseHTTPRequestHandler):
         kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7, 7))
         opening = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel)
         return opening
+
     def get_text(self,img_path):
         time = datetime.now()
         alnum = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ: '
-        #result = self.reader.readtext(img_path, allowlist=alnum, batch_size=200,workers=4, decoder="wordbeamsearch")
+        result = self.reader.readtext(img_path, allowlist=alnum, batch_size=200,workers=4, decoder="wordbeamsearch")
         print(f"Request took {datetime.now() - time}")
         
         
@@ -56,26 +63,53 @@ class FileUploadHandler(BaseHTTPRequestHandler):
         return result[0][0]
 
     def process_image(self,img_path):
-        time = datetime.now()
-        alnum = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ '
-        result = self.reader.readtext(img_path, allowlist=alnum, batch_size=200,workers=4, decoder="wordbeamsearch")
-        print(f"Request took {datetime.now() - time}")
-        result = list(map(lambda x: [x[1], self.get_polygon_area([x[0][0], x[0][1], x[0][2], x[0][3]])], result))
-        result.sort(key=lambda x: x[1], reverse=True)
-        pprint(result)
-        if(result == []):
-            return None
 
-        req = requests.get('https://www.googleapis.com/books/v1/volumes',
-                        params={'q': str(result[0][0]) + " " + str(result[1][0]), "key": "AIzaSyCL1jiXvWMEBBhu1ulEVSgELE_h84IdpqM"})
+        book = None
+        book_id = None
+        image = cv2.imread(img_path)
+        for i in range(4):
+            time = datetime.now()
+            alnum = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ '
+            result=self.reader.readtext(image,allowlist = alnum,batch_size=200,workers=4,decoder="wordbeamsearch")
+            print(f"Request took {datetime.now() - time}")
+            result = list(map(lambda x: [x[1], self.get_polygon_area([x[0][0], x[0][1], x[0][2], x[0][3]])], result))
+            result.sort(key=lambda x: x[1], reverse=True)
+            pprint(result)
+            
+
+            req = requests.get('https://www.googleapis.com/books/v1/volumes',
+                            params={'q': str(result[0][0]) + " " + str(result[1][0]), "key": "AIzaSyCL1jiXvWMEBBhu1ulEVSgELE_h84IdpqM"})
+            if req =={}:
+                return None
+            try:
+                book_id = req.json()['items'][0]['id']
+            except:
+                print('NO match, rotating')
+                image = cv2.rotate(image, cv2.cv2.ROTATE_90_CLOCKWISE)
+                
+                cv2.imshow('image window', image)
+                # add wait key. window waits until user presses a key
+                cv2.waitKey(0)
+                # and finally destroy/close all open windows
+                cv2.destroyAllWindows()
+
+
+
+                continue
+            book = requests.get('https://www.googleapis.com/books/v1/volumes/' + book_id,
+                            params={"key": "AIzaSyCL1jiXvWMEBBhu1ulEVSgELE_h84IdpqM"}).json()['volumeInfo']
+            if(len(book['title'])<3):
+                print('name too short rotating')
+                image = cv2.rotate(image, cv2.cv2.ROTATE_90_CLOCKWISE)
+                continue
+            break
+        if book_id is None: return None
+
+        
         try:
-            book_id = req.json()['items'][0]['id']
+            isbn = book["industryIdentifiers"][0]['identifier']
         except:
             return None
-
-        book = requests.get('https://www.googleapis.com/books/v1/volumes/' + book_id,
-                        params={"key": "AIzaSyCL1jiXvWMEBBhu1ulEVSgELE_h84IdpqM"}).json()['volumeInfo']
-        isbn = book["industryIdentifiers"][0]['identifier']
         #delme
         #isbn = '9780520266124'
         book_alternative = requests.get('https://openlibrary.org/api/books?bibkeys=ISBN:'+isbn+'&jscmd=data&format=json')
@@ -90,10 +124,14 @@ class FileUploadHandler(BaseHTTPRequestHandler):
         
             print('\n\n\n')
             cats=[]
-            for x in book_alternative['subjects']:
-                cats.append(x['name'])
-            pprint(cats)
-            book['categories']=cats
+            try:
+                book_alternative['subjects']
+                for x in book_alternative['subjects']:
+                    cats.append(x['name'])
+                pprint(cats)
+                book['categories'] = [x for x in cats if is_ascii(x)]
+            except:
+                pass
             print('\n\n\n')
             
         print("Title: " + book['title'])
@@ -179,3 +217,4 @@ httpd.serve_forever()
 
 
 
+#todfilter categories with nonascii
