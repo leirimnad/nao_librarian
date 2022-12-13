@@ -362,7 +362,7 @@ class NAOLibrarian(object):
             ctx.ocr_request = None
 
         qi.async(decorate_sending_photo, self)
-        with open(photo_path, "rb") s f:
+        with open(photo_path, "rb") as f:
             self.ocr_request = requests.post(self.ocr_server_address+"/cover", files={"file": f})
         response = self.ocr_request
 
