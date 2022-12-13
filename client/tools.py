@@ -20,7 +20,7 @@ def get_distance(x_pos, y_pos, img):
     horizontal_distance = np.tan(alpha_h) * vertical_distance
     distance = vertical_distance / np.cos(alpha_h)
 
-    rotation = np.arctan(horizontal_distance / focal_length)
+    rotation = np.arctan(horizontal_distance / vertical_distance)
 
     return vertical_distance, horizontal_distance, distance, rotation
 

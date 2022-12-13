@@ -22,7 +22,7 @@ class NAOLibrarian(object):
         logging.info("Initializing NAO Librarian")
 
         self.box_step = 30.0 / 100.0
-        self.foot_len = 12.0 / 100.0
+        self.foot_len = 8.0 / 100.0
 
         self.ocr_server_address = ocr_server_address
 
@@ -72,6 +72,7 @@ class NAOLibrarian(object):
             if p[1] and "Head/Touch" in p[0]:
                 self.touch.signal.disconnect(self.id)
                 logging.info("Head touch detected, starting the script")
+                logging.info("Starting position: {}".format(self.motion.getRobotPosition(True)))
                 self.tts.say("Starting the script!")
                 self.start_script()
                 break
@@ -270,7 +271,7 @@ class NAOLibrarian(object):
     def go_to_book(self, book):
         # type: (Book) -> None
         logging.info("Going to book")
-        self.move_with_stops(book.image_book, self.look_for_book)
+        self.move_with_stops(book.image_book, lambda: [self.look_for_book()])
         self.change_posture_for_photo()
 
     def move_to_book(self, image_book):
@@ -284,7 +285,7 @@ class NAOLibrarian(object):
         self.moveTo(
             image_book.vertical_distance / 100 - self.foot_len * vertical_part,
             (-1) * image_book.horizontal_distance / 100 - self.foot_len * horizontal_part,
-            -1.5 * image_book.rotation
+            -image_book.rotation
         )
 
     def move_with_stops(self, image_book, book_func, stops=None, safe_distance=50, min_step_distance=30):
@@ -391,7 +392,7 @@ class NAOLibrarian(object):
             cv2.imwrite(file_path, np_arr)
             logging.info("Run book photo saved UNWARPED to {}".format(file_path))
 
-
+        self.motion.setAngles("HeadPitch", 0, 0.1)
 
         return file_path
 
@@ -436,7 +437,7 @@ class NAOLibrarian(object):
                 logging.info("Decorating sending photo, iteration {}".format(it))
                 ctx.tts.say(phrases[it % len(phrases)])
                 it += 1
-                sleep(4)
+                sleep(3)
             ctx.ocr_request = None
 
         qi.async(decorate_sending_photo, self)
@@ -476,8 +477,9 @@ class NAOLibrarian(object):
 #        position_history_copy = copy.copy(self.position_history)
 #        for position in reversed(position_history_copy):
 #            self.go_to_position(*position, mirror_theta=True)
+        x, y, _ = self.motion.getRobotPosition(True)
         self.go_to_position(*self.position_history[0], mirror_theta=True)
-        self.go_to_position(*self.position_history[0], mirror_theta=True)
+
         logging.info("Going to box area finished")
         self.tts.say("Let's look at the boxes")
 
@@ -492,6 +494,11 @@ class NAOLibrarian(object):
             th -= 2*3.1415
         elif th < -3.1415:
             th += 2*3.1415
+        self.motion.moveTo(
+            current_position[0],
+            current_position[1],
+            0
+        )
         self.moveTo(
             x - current_position[0],
             y - current_position[1],
