@@ -31,5 +31,7 @@ if __name__ == "__main__":
         print ("Can't connect to Naoqi at ip \"" + args.ip + "\" on port " + str(args.port) + ".\n" +
                "Please check your script arguments. Run with -h option for help.")
         sys.exit(1)
+
     librarian = NAOLibrarian(app, args.ocr, args.rec)
     app.run()
+    

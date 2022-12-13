@@ -22,7 +22,7 @@ class NAOLibrarian(object):
         logging.info("Initializing NAO Librarian")
 
         self.box_step = 30.0 / 100.0
-        self.foot_len = 3.0 / 100.0
+        self.foot_len = 6.0 / 100.0
 
         self.ocr_server_address = ocr_server_address
 
@@ -33,7 +33,7 @@ class NAOLibrarian(object):
         self.memory_service = session.service("ALMemory")
         self.tts = session.service("ALTextToSpeech")
         self.tts.setLanguage("English")
-        self.tts.setVolume(0.1)
+        self.tts.setVolume(0.4)
         self.motion = session.service("ALMotion")
         self.video_device = session.service("ALVideoDevice")
         self.tracker = session.service("ALTracker")
@@ -51,7 +51,10 @@ class NAOLibrarian(object):
         self.book_threshold = 0.1
 
         logging.info("Initialization finished")
+
         self.run()
+
+
 
     def run(self):
         self.wait_for_starting_touch()
@@ -76,16 +79,20 @@ class NAOLibrarian(object):
     def start_script(self):
         # type: () -> None
 
-        image_book = self.look_for_book()
-        if image_book is None:
-            self.on_book_not_found()
-            return
+        try:
+            image_book = self.look_for_book()
+            if image_book is None:
+                self.on_book_not_found()
+                return
 
-        book = Book(image_book)
+            book = Book(image_book)
 
-        self.book_found_decorations(book)
+            self.book_found_decorations(book)
 
-        self.run_book_scenario(book)
+            self.run_book_scenario(book)
+        except Exception, e:
+            logging.error("Error: " + str(e))
+            raise
 
     def run_book_scenario(self, book):
         # type: (Book) -> None
@@ -193,15 +200,17 @@ class NAOLibrarian(object):
         res = list(filter(lambda o: o[0].lower() == "book", res))
         res.sort(key=lambda o: o[2], reverse=True)
 
-        logging.debug("Filtered object detection result: \n{}".format(pprint.pformat(res)))
-        if len(res) == 0:
-            logging.info("No book found")
-
         filename = "./logs/"+datetime.now().strftime("%d-%m-%Y %H-%M-%S")+".jpg"
         save_image(img, filename)
         logging.info("Image saved to {}".format(filename))
 
-        return None if len(res) == 0 else ImageBook(img, res[3][1], res[3][3], res[3][0], res[3][2])
+        logging.debug("Filtered object detection result: \n{}".format(pprint.pformat(res)))
+        if len(res) == 0:
+            logging.info("No book found")
+            return None
+
+        res = res[0]
+        return ImageBook(nparr_from_image(img), res[3][1], res[3][3], res[3][0], res[3][2])
 
     def on_book_not_found(self):
         # type: () -> None
@@ -226,6 +235,9 @@ class NAOLibrarian(object):
         # type: (NAOLibrarian, ImageBook) -> None
 
         logging.info("Moving to book: " + str(image_book))
+
+        vertical_part = abs(image_book.vertical_distance)/(abs(image_book.vertical_distance) + abs(image_book.horizontal_distance))
+        horizontal_part = abs(image_book.horizontal_distance)/(abs(image_book.vertical_distance) + abs(image_book.horizontal_distance))
 
         self.moveTo(
             image_book.vertical_distance / 100 - self.foot_len,
