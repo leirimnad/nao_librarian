@@ -47,7 +47,7 @@ class NAOLibrarian(object):
         self.touch = self.memory_service.subscriber("TouchChanged")
         self.ocr_request = None
         self.mock_recognition = (rec_server_address == "")
-        self.book_threshold = 0.02
+        self.book_threshold = 0.017
 
         logging.info("Initialization finished")
         self.tts.say("Ready for work! Touch my head to start.")
@@ -106,10 +106,13 @@ class NAOLibrarian(object):
 
         if book_info is None:
             self.on_book_info_not_found()
+            self.go_to_box_area()
+            self.go_to_position(*self.position_history[0])
             return
 
         self.say_book_info(book_info)
 
+        self.moveTo(-0.2, 0, 0)
         self.go_to_box_area()
 
         box_category = self.find_box(book_info)
@@ -139,41 +142,61 @@ class NAOLibrarian(object):
         img = self.take_photo(resolution=resolution, return_numpy=False)
 
         book = self.find_book_mock(img) if self.mock_recognition else self.find_book(img)
-        while book is None:
+        while book in [None, -1, 1]:
 
-            logging.info("Book not found")
+            logging.info("Book search result: {}".format(book))
 
-            for i in range(0, 2):  # lean 2x30 deg = 60 deg right
+
+            angle = np.pi / 6
+            if book == -1:
+                angle = np.pi / 12
+                self.tts.say("Is it a book there, to the left?")
+            elif book == 1:
+                angle = -np.pi / 12
+                self.tts.say("Is it a book there, to the right?")
+
+            for i in range(0, 2):
                 # self.blink()
-                logging.info("Moving 30 deg right")
-                self.moveTo(0, 0, np.pi / 6)
+                logging.info("Moving {} deg left".format(round(angle*180/np.pi)))
+                self.moveTo(0, 0, angle)
                 img = self.take_photo(resolution=resolution, return_numpy=False)
                 book = self.find_book(img)
-                if book:
+                if book not in [None, -1, 1]:
                     return book
 
             logging.info("Book not found, resetting position")
 
             # reset position
-            self.moveTo(0, 0, 2 / 6 * np.pi)
+            self.moveTo(0, 0, -angle*2)
+
+            logging.info("Book search result was: {}".format(book))
+
+            angle = np.pi / 6
+            if book == -1:
+                angle = np.pi / 12
+                self.tts.say("Is there a book to the left?")
+            elif book == 1:
+                angle = -np.pi / 12
+                self.tts.say("Is there a book to the right?")
+
 
             for i in range(0, 2):
                 # self.blink()
-                logging.info("Moving 30 deg right")
-                self.moveTo(0, 0, np.pi / 6)
+                logging.info("Moving {} deg left".format(round(angle*180/np.pi)))
+                self.moveTo(0, 0, angle)
                 img = self.take_photo(resolution=resolution, return_numpy=False)
                 book = self.find_book(img)
-                if book:
+                if book not in [None, -1, 1]:
                     return book
 
             logging.info("Book not found, moving again")
-            self.moveTo(0, 0, -2 / 6 * np.pi)
+            self.moveTo(0, 0, -angle*2)
             self.moveTo(0, 0.5, 0)
             book = self.find_book(img)
 
             logging.warn("Book still not found, redoing the cycle")
 
-        if book is not None:
+        if book not in [None, -1, 1]:
             logging.info("Book found: " + str(book))
         return book
 
@@ -215,6 +238,15 @@ class NAOLibrarian(object):
             return None
 
         res = res[0]
+
+        if int(res[3][1]) < 20:
+            logging.info("Book is on the left side, returning -1")
+            return -1
+
+        if int(res[3][3]) > img[0] - 20:
+            logging.info("Book is on the right side, returning 1")
+            return 1
+
         return ImageBook(nparr_from_image(img), res[3][1], res[3][3], res[3][0], res[3][2])
 
     def on_book_not_found(self):
@@ -252,7 +284,7 @@ class NAOLibrarian(object):
         self.moveTo(
             image_book.vertical_distance / 100 - self.foot_len * vertical_part,
             (-1) * image_book.horizontal_distance / 100 - self.foot_len * horizontal_part,
-            -1 * image_book.rotation
+            -1.5 * image_book.rotation
         )
 
     def move_with_stops(self, image_book, book_func, stops=None, safe_distance=50, min_step_distance=30):
@@ -309,7 +341,7 @@ class NAOLibrarian(object):
 
     def moveTo(self, x, y, theta):
         # type: (float, float, float) -> None
-        x, y, theta = round(x, 6), round(y, 6), round(theta, 6)
+        x, y, theta = round(x, 4), round(y, 4), round(theta, 4)
         logging.debug("Moving to: x={}, y={}, theta={}".format(x, y, theta))
         self.position_history.append(self.motion.getRobotPosition(True))
         self.motion.moveTo(x, y, theta)
@@ -379,7 +411,7 @@ class NAOLibrarian(object):
         image = self.video_device.getImageRemote(lower_camera)
         self.video_device.unsubscribe(lower_camera)
         if save_to is not None:
-            cv2.imwrite(save_to, image)
+            cv2.imwrite(save_to, nparr_from_image(image))
             logging.info("Photo saved to {}".format(save_to))
             return save_to
         return nparr_from_image(image) if return_numpy else image
@@ -440,9 +472,14 @@ class NAOLibrarian(object):
         # type: () -> None
         logging.info("Going to box area")
         logging.debug("Position history: \n{}".format(pprint.pformat(self.position_history)))
-        position_history_copy = copy.copy(self.position_history)
-        for position in reversed(position_history_copy):
-            self.go_to_position(*position, mirror_theta=True)
+        logging.debug("Current position: {}".format(self.motion.getRobotPosition(True)))
+#        position_history_copy = copy.copy(self.position_history)
+#        for position in reversed(position_history_copy):
+#            self.go_to_position(*position, mirror_theta=True)
+        self.go_to_position(*self.position_history[0], mirror_theta=True)
+        self.go_to_position(*self.position_history[0], mirror_theta=True)
+        logging.info("Going to box area finished")
+        self.tts.say("Let's look at the boxes")
 
     def go_to_position(self, x, y, theta, mirror_theta=False):
         # type: (float, float, float, bool) -> None
@@ -450,10 +487,15 @@ class NAOLibrarian(object):
         current_position = self.motion.getRobotPosition(True)
         if mirror_theta:
             theta = theta + 3.1415 if theta <= 0 else theta - 3.1415
+        th = theta - current_position[2]
+        if th > 3.1415:
+            th -= 2*3.1415
+        elif th < -3.1415:
+            th += 2*3.1415
         self.moveTo(
             x - current_position[0],
             y - current_position[1],
-            theta - current_position[2]
+            th
         )
 
     def find_box(self, book_info):
@@ -463,9 +505,9 @@ class NAOLibrarian(object):
 
         path = self.take_photo(save_to="./run/box.png")
         text = self.get_text_from_image(path)
-        logging.info("Text from image: " + text)
-        if text is None or not text.startswith("NAOBox:"):
-            logging.warn("Text is None or does not start with NAOBox:")
+        logging.info("Text from image: " + str(text))
+        if text is None or not text.lower().startswith("cat:"):
+            logging.warn("Text is None or does not start with cat:")
             self.tts.say("I did not find the box in the box area")
             return None
 
