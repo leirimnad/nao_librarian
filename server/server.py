@@ -39,7 +39,7 @@ class FileUploadHandler(BaseHTTPRequestHandler):
         return opening
     def get_text(self,img_path):
         time = datetime.now()
-        alnum = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ '
+        alnum = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ: '
         #result = self.reader.readtext(img_path, allowlist=alnum, batch_size=200,workers=4, decoder="wordbeamsearch")
         print(f"Request took {datetime.now() - time}")
         
