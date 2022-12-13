@@ -22,7 +22,7 @@ class NAOLibrarian(object):
         logging.info("Initializing NAO Librarian")
 
         self.box_step = 30.0 / 100.0
-        self.foot_len = 10.0 / 100.0
+        self.foot_len = 20.0 / 100.0
 
         self.ocr_server_address = ocr_server_address
 
@@ -47,7 +47,7 @@ class NAOLibrarian(object):
         self.touch = self.memory_service.subscriber("TouchChanged")
         self.ocr_request = None
         self.mock_recognition = (rec_server_address == "")
-        self.book_threshold = 0.05
+        self.book_threshold = 0.02
 
         logging.info("Initialization finished")
         self.tts.say("Ready for work! Touch my head to start.")
@@ -227,12 +227,12 @@ class NAOLibrarian(object):
         x = round(book.image_book.vertical_distance/100, 4)
         y = round(book.image_book.horizontal_distance/100, 4)
         logging.info("Book in absolute position: x={} y={}".format(x, y))
-        logging.info("Robot position: {}".format(self.motion.getRobotPosition(True)))
-        x, y, _ = self.get_position_relative_to_robot(x, y, 0)
-        logging.info("Book in relative position: x={} y={}".format(x, y))
+#        logging.info("Robot position: {}".format(self.motion.getRobotPosition(True)))
+#        x, y, _ = self.get_position_relative_to_robot(x, y, 0)
+#        logging.info("Book in relative position: x={} y={}".format(x, y))
         point_to = [x, y, 0.08]
         logging.debug("Pointing RARm to {}".format(point_to))
-        self.tracker.pointAt("RArm", point_to, 1, 0.1)
+        self.tracker.pointAt("RArm", point_to, 2, 0.1)
         self.tts.say("Book found!")
 
     def go_to_book(self, book):
@@ -280,8 +280,8 @@ class NAOLibrarian(object):
         logging.info("Moving to book: " + str(image_book) + ", stops left:" + str(stops))
 
         self.moveTo(
-            (image_book.vertical_distance / 100 - self.foot_len) * stop_mult,
-            ((-1) * image_book.horizontal_distance / 100 - self.foot_len) * stop_mult,
+            (image_book.vertical_distance / 100) * stop_mult,
+            ((-1) * image_book.horizontal_distance / 100) * stop_mult,
             (-1 * image_book.rotation) * stop_mult
         )
 
@@ -329,8 +329,9 @@ class NAOLibrarian(object):
         logging.info("Changing posture for photo")
         self.posture.goToPosture("Crouch", 1)
         self.motion.setStiffnesses("Head", 1.0)
-        self.motion.setAngles("HeadPitch", 0.43, 0.1)
+        self.motion.setAngles("HeadPitch", 0.35, 0.1)
         self.motion.setAngles("HeadYaw", 0.0, 0.1)
+        sleep(0.5)
 
     def take_book_photo(self):
         # type: () -> str
@@ -404,7 +405,10 @@ class NAOLibrarian(object):
 
         qi.async(decorate_sending_photo, self)
         with open(photo_path, "rb") as f:
-            self.ocr_request = requests.post(self.ocr_server_address+"/cover", files={"file": f})
+            try:
+                self.ocr_request = requests.post(self.ocr_server_address+"/cover", files={"file": f})
+            except:
+                return None
         response = self.ocr_request
 
         if response.status_code != 200:
