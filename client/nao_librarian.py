@@ -22,7 +22,7 @@ class NAOLibrarian(object):
         logging.info("Initializing NAO Librarian")
 
         self.box_step = 30.0 / 100.0
-        self.foot_len = 20.0 / 100.0
+        self.foot_len = 12.0 / 100.0
 
         self.ocr_server_address = ocr_server_address
 
@@ -102,7 +102,6 @@ class NAOLibrarian(object):
         self.go_to_book(book)
         photo_path = self.take_book_photo()
 
-        # TODO: async call
         book_info = self.send_photo_to_server(photo_path)
 
         if book_info is None:
@@ -330,7 +329,7 @@ class NAOLibrarian(object):
         logging.info("Changing posture for photo")
         self.posture.goToPosture("Crouch", 1)
         self.motion.setStiffnesses("Head", 1.0)
-        self.motion.setAngles("HeadPitch", 0.35, 0.1)
+        self.motion.setAngles("HeadPitch", 0.4, 0.1)
         self.motion.setAngles("HeadYaw", 0.0, 0.1)
         sleep(0.5)
 
@@ -364,7 +363,7 @@ class NAOLibrarian(object):
 
         return file_path
 
-    def take_photo(self, resolution="1280*960", return_numpy=False):
+    def take_photo(self, resolution="1280*960", return_numpy=False, save_to=None):
 
         resolutions = {
             "1280*960": (3,1280,960),
@@ -379,6 +378,10 @@ class NAOLibrarian(object):
         lower_camera = self.video_device.subscribeCamera("kBottomCamera", 1, resolutions[resolution][0], color_space, 30)
         image = self.video_device.getImageRemote(lower_camera)
         self.video_device.unsubscribe(lower_camera)
+        if save_to is not None:
+            cv2.imwrite(save_to, image)
+            logging.info("Photo saved to {}".format(save_to))
+            return save_to
         return nparr_from_image(image) if return_numpy else image
 
     def send_photo_to_server(self, photo_path):
@@ -393,11 +396,11 @@ class NAOLibrarian(object):
                 "What book is this?",
                 "That's probably...",
                 "Hmm...",
-                "Ehh?"
+                "Maybe it's...",
             ]
             shuffle(phrases)
             it = 0
-            while ctx.ocr_request is None or ctx.ocr_request.status_code is None:
+            while ctx.ocr_request is None:
                 logging.info("Decorating sending photo, iteration {}".format(it))
                 ctx.tts.say(phrases[it % len(phrases)])
                 it += 1
@@ -408,7 +411,9 @@ class NAOLibrarian(object):
         with open(photo_path, "rb") as f:
             try:
                 self.ocr_request = requests.post(self.ocr_server_address+"/cover", files={"file": f})
-            except:
+            except Exception, e:
+                logging.error("Could not get book info from server: {}".format(e))
+                self.ocr_request = False
                 return None
         response = self.ocr_request
 
@@ -456,7 +461,8 @@ class NAOLibrarian(object):
 
         logging.info("Checking if in front is the box for book: " + str(book_info))
 
-        text = self.get_text_from_image(self.take_photo())
+        path = self.take_photo(save_to="./run/box.png")
+        text = self.get_text_from_image(path)
         logging.info("Text from image: " + text)
         if text is None or not text.startswith("NAOBox:"):
             logging.warn("Text is None or does not start with NAOBox:")
