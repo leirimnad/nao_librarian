@@ -41,7 +41,7 @@ class NAOLibrarian(object):
         self.memory_service = session.service("ALMemory")
         self.tts = session.service("ALTextToSpeech")
         self.tts.setLanguage("English")
-        self.tts.setVolume(0.3)
+        self.tts.setVolume(0.1)
         self.motion = session.service("ALMotion")
         self.video_device = session.service("ALVideoDevice")
         self.tracker = session.service("ALTracker")
@@ -202,7 +202,7 @@ class NAOLibrarian(object):
         if len(res) == 0:
             logging.info("No book found")
 
-        filename = datetime.now().strftime("%d-%m-%Y %H-%M-%S") + ".jpg"
+        filename = "./logs/"+datetime.now().strftime("%d-%m-%Y %H-%M-%S")+".jpg"
         save_image(img, filename)
         logging.info("Image saved to {}".format(filename))
 
@@ -306,7 +306,7 @@ class NAOLibrarian(object):
         logging.info("Changing posture for photo")
         self.posture.goToPosture("Crouch", 1)
         self.motion.setStiffnesses("Head", 1.0)
-        self.motion.setAngles("HeadPitch", 0.0, 0.1)
+        self.motion.setAngles("HeadPitch", 1, 0.1)
         self.motion.setAngles("HeadYaw", 0.0, 0.1)
 
     def take_book_photo(self):
@@ -383,7 +383,7 @@ class NAOLibrarian(object):
         # type: (BookInfo) -> None
         logging.info("Playing book info")
         self.tts.say("The book is called: " + book_info.title)
-        self.tts.say("The author is: " + book_info.author)
+        self.tts.say("The authors are: " + ", ".join(book_info.authors))
 
     def go_to_box_area(self):
         # type: () -> None
