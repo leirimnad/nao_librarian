@@ -123,7 +123,7 @@ def get_warped_image(img, debug=False):
 
         wh, ww = warped_image.shape[:2]
 
-        if wh < ih * 0.25 or ww < iw * 0.25:
+        if wh < ih * 0.35 or ww < iw * 0.35:
             return None
 
 
