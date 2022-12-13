@@ -48,6 +48,7 @@ class NAOLibrarian(object):
         self.tts.say("Ready for work! Touch my head to start.")
         self.ocr_request = None
         self.mock_recognition = (rec_server_address == "")
+        self.book_threshold = 0.1
 
         logging.info("Initialization finished")
         self.run()
@@ -173,8 +174,10 @@ class NAOLibrarian(object):
         img_height = img[1]
         return ImageBook(nparr_from_image(img), int(img_width*0.4), int(img_width*0.6), int(img_height*0.7), int(img_height*0.8))
 
-    def find_book(self, img, threshold=0.2):
-        logging.info("Object detection requested")
+    def find_book(self, img, threshold=None):
+        if threshold is None:
+            threshold = self.book_threshold
+        logging.info("Object detection requested with threshold {}".format(threshold))
 
         # ALIMDetection
         self.rec_server = qi.Session()
