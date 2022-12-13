@@ -61,6 +61,8 @@ class FileUploadHandler(BaseHTTPRequestHandler):
         result = list(map(lambda x: [x[1], self.get_polygon_area([x[0][0], x[0][1], x[0][2], x[0][3]])], result))
         result.sort(key=lambda x: x[1], reverse=True)
         pprint(result)
+        if(result == []):
+            return None
 
         req = requests.get('https://www.googleapis.com/books/v1/volumes',
                         params={'q': str(result[0][0]) + " " + str(result[1][0]), "key": "AIzaSyCL1jiXvWMEBBhu1ulEVSgELE_h84IdpqM"})
@@ -100,6 +102,9 @@ class FileUploadHandler(BaseHTTPRequestHandler):
             with open('images/'+filename, 'xb') as f:
                 f.write(file_item.file.read())
             book=self.process_image('images/'+filename)
+            if book is None:
+                self.send_response(400)
+                self.end_headers()
             # Send a response indicating that the file was uploaded successfully
             self.send_response(200)
             self.end_headers()
