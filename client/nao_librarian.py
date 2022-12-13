@@ -231,8 +231,9 @@ class NAOLibrarian(object):
 #        x, y, _ = self.get_position_relative_to_robot(x, y, 0)
 #        logging.info("Book in relative position: x={} y={}".format(x, y))
         point_to = [x, y, 0.08]
-        logging.debug("Pointing RARm to {}".format(point_to))
-        self.tracker.pointAt("RArm", point_to, 2, 0.1)
+        point_arm = "RArm" if y >= 0 else "LArm"
+        logging.debug("Pointing {} to {}".format(point_arm, point_to))
+        self.tracker.pointAt(point_arm, point_to, 2, 0.1)
         self.tts.say("Book found!")
 
     def go_to_book(self, book):
