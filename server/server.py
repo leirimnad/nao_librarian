@@ -113,7 +113,22 @@ class FileUploadHandler(BaseHTTPRequestHandler):
             self.end_headers()
             json_string = json.loads(json.dumps(book))
             print(json_string)
-            json_modified = {"title": json_string["title"], "authors": json_string["authors"], "categories": json_string["categories"]}
+            title=""
+            authors=[]
+            categories=[]
+            try:
+                title=json_string["title"]
+            except:
+                pass
+            try:
+                authors=json_string["authors"]
+            except:
+                pass
+            try:
+                categories=json_string["categories"]
+            except:
+                pass
+            json_modified = {"title": title, "authors": authors, "categories": categories}
             self.wfile.write(json.dumps(json_modified).encode('utf-8'))
         elif self.path == '/category':
             print (f"RECOGNISE CATEGORY from {self.client_address[0]}")
