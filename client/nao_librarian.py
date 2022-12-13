@@ -14,14 +14,6 @@ from perspective_warp import get_warped_image
 from random import shuffle
 from time import sleep
 
-logging.basicConfig(
-    format='%(asctime)s %(message)s',
-    datefmt='%H:%M:%S',
-    filename="logs/"+datetime.now().strftime("%d-%m-%Y %H-%M-%S") + '.log',
-    level=logging.DEBUG
-)
-logging.getLogger().addHandler(logging.StreamHandler())
-
 
 class NAOLibrarian(object):
     def __init__(self, app, ocr_server_address, rec_server_address):
