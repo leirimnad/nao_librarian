@@ -39,7 +39,7 @@ class FileUploadHandler(BaseHTTPRequestHandler):
         return opening
     def get_text(self,img_path):
         time = datetime.now()
-        alnum = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ '
+        alnum = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ: '
         #result = self.reader.readtext(img_path, allowlist=alnum, batch_size=200,workers=4, decoder="wordbeamsearch")
         print(f"Request took {datetime.now() - time}")
         
@@ -51,6 +51,8 @@ class FileUploadHandler(BaseHTTPRequestHandler):
         result = list(map(lambda x: [x[1], self.get_polygon_area([x[0][0], x[0][1], x[0][2], x[0][3]])], result))
         result.sort(key=lambda x: x[1], reverse=True)
         pprint(result)
+        if not result:
+            return None
         return result[0][0]
 
     def process_image(self,img_path):
@@ -73,7 +75,27 @@ class FileUploadHandler(BaseHTTPRequestHandler):
 
         book = requests.get('https://www.googleapis.com/books/v1/volumes/' + book_id,
                         params={"key": "AIzaSyCL1jiXvWMEBBhu1ulEVSgELE_h84IdpqM"}).json()['volumeInfo']
-
+        isbn = book["industryIdentifiers"][0]['identifier']
+        #delme
+        #isbn = '9780520266124'
+        book_alternative = requests.get('https://openlibrary.org/api/books?bibkeys=ISBN:'+isbn+'&jscmd=data&format=json')
+    
+        print('\n\n\n')
+        print('ALTERNATIVE')
+        if book_alternative.json()=={}:
+            book_alternative = None
+        else:
+            book_alternative = book_alternative.json()['ISBN:'+isbn]
+            pprint(book_alternative)
+        
+            print('\n\n\n')
+            cats=[]
+            for x in book_alternative['subjects']:
+                cats.append(x['name'])
+            pprint(cats)
+            book['categories']=cats
+            print('\n\n\n')
+            
         print("Title: " + book['title'])
 
         if 'authors' in book.keys():
@@ -92,6 +114,7 @@ class FileUploadHandler(BaseHTTPRequestHandler):
             print("Rating: " + str(book['averageRating']))
         if 'language' in book.keys():
             print("Language: " + book['language'])
+    
         return book
 
     def do_POST(self):
@@ -135,6 +158,9 @@ class FileUploadHandler(BaseHTTPRequestHandler):
             with open('./images/'+filename, 'wb') as f:
                 f.write(form['file'].file.read())
             category=self.get_text('./images/'+filename)
+            if category is None:
+                self.send_response(400)
+                self.end_headers()
             self.send_response(200)
             self.end_headers()
             print(f"category is {category}")
@@ -147,3 +173,9 @@ class FileUploadHandler(BaseHTTPRequestHandler):
 httpd = HTTPServer(('0.0.0.0', 8080), FileUploadHandler)
 print("server started")
 httpd.serve_forever()
+
+
+
+
+
+
