@@ -33,7 +33,7 @@ class NAOLibrarian(object):
         self.memory_service = session.service("ALMemory")
         self.tts = session.service("ALTextToSpeech")
         self.tts.setLanguage("English")
-        self.tts.setVolume(0.1)
+        self.tts.setVolume(0.4)
         self.motion = session.service("ALMotion")
         self.video_device = session.service("ALVideoDevice")
         self.tracker = session.service("ALTracker")
@@ -47,7 +47,7 @@ class NAOLibrarian(object):
         self.touch = self.memory_service.subscriber("TouchChanged")
         self.ocr_request = None
         self.mock_recognition = (rec_server_address == "")
-        self.book_threshold = 0.07
+        self.book_threshold = 0.05
 
         logging.info("Initialization finished")
         self.tts.say("Ready for work! Touch my head to start.")
