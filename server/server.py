@@ -79,11 +79,22 @@ class FileUploadHandler(BaseHTTPRequestHandler):
 
             req = requests.get('https://www.googleapis.com/books/v1/volumes',
                             params={'q': str(result[0][0]) + " " + str(result[1][0]), "key": "AIzaSyCL1jiXvWMEBBhu1ulEVSgELE_h84IdpqM"})
+            if req =={}:
+                return None
             try:
                 book_id = req.json()['items'][0]['id']
             except:
                 print('NO match, rotating')
                 image = cv2.rotate(image, cv2.cv2.ROTATE_90_CLOCKWISE)
+                
+                cv2.imshow('image window', image)
+                # add wait key. window waits until user presses a key
+                cv2.waitKey(0)
+                # and finally destroy/close all open windows
+                cv2.destroyAllWindows()
+
+
+
                 continue
             book = requests.get('https://www.googleapis.com/books/v1/volumes/' + book_id,
                             params={"key": "AIzaSyCL1jiXvWMEBBhu1ulEVSgELE_h84IdpqM"}).json()['volumeInfo']
