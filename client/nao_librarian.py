@@ -22,7 +22,7 @@ class NAOLibrarian(object):
         logging.info("Initializing NAO Librarian")
 
         self.box_step = 30.0 / 100.0
-        self.foot_len = 6.0 / 100.0
+        self.foot_len = 10.0 / 100.0
 
         self.ocr_server_address = ocr_server_address
 
@@ -33,7 +33,7 @@ class NAOLibrarian(object):
         self.memory_service = session.service("ALMemory")
         self.tts = session.service("ALTextToSpeech")
         self.tts.setLanguage("English")
-        self.tts.setVolume(0.4)
+        self.tts.setVolume(0.1)
         self.motion = session.service("ALMotion")
         self.video_device = session.service("ALVideoDevice")
         self.tracker = session.service("ALTracker")
@@ -43,14 +43,15 @@ class NAOLibrarian(object):
         session.service("ALNavigation")
         self.rec_server_address = rec_server_address
         self.position_history = []  # list[tuple[float, float, float]]
-        self.posture.goToPosture("Stand", 0.5)
+        self.posture.goToPosture("Stand", 0.2)
         self.touch = self.memory_service.subscriber("TouchChanged")
-        self.tts.say("Ready for work! Touch my head to start.")
         self.ocr_request = None
         self.mock_recognition = (rec_server_address == "")
-        self.book_threshold = 0.1
+        self.book_threshold = 0.07
 
         logging.info("Initialization finished")
+        self.tts.say("Ready for work! Touch my head to start.")
+
 
         self.run()
 
@@ -170,6 +171,9 @@ class NAOLibrarian(object):
             book = self.find_book(img)
 
             logging.warn("Book still not found, redoing the cycle")
+
+        if book is not None:
+            logging.info("Book found: " + str(book))
         return book
 
     def find_book_mock(self, img, threshold=0.2):
@@ -220,9 +224,12 @@ class NAOLibrarian(object):
         # type: (Book) -> None
         x = round(book.image_book.vertical_distance/100, 4)
         y = round(book.image_book.horizontal_distance/100, 4)
+        logging.info("Book in absolute position: x={} y={}".format(x, y))
         x, y, _ = self.get_position_relative_to_robot(x, y, 0)
-        logging.debug("Pointing RARm to {}".format([x, y, 0]))
-        self.tracker.pointAt("RArm", [x, y, 0], 1, 0.1)
+        logging.info("Book in relative position: x={} y={}".format(x, y))
+        point_to = [x, y, 0.08]
+        logging.debug("Pointing RARm to {}".format(point_to))
+        self.tracker.pointAt("RArm", point_to, 1, 0.1)
         self.tts.say("Book found!")
 
     def go_to_book(self, book):
@@ -240,8 +247,8 @@ class NAOLibrarian(object):
         horizontal_part = abs(image_book.horizontal_distance)/(abs(image_book.vertical_distance) + abs(image_book.horizontal_distance))
 
         self.moveTo(
-            image_book.vertical_distance / 100 - self.foot_len,
-            (-1) * image_book.horizontal_distance / 100 - self.foot_len,
+            image_book.vertical_distance / 100 - self.foot_len * vertical_part,
+            (-1) * image_book.horizontal_distance / 100 - self.foot_len * horizontal_part,
             -1 * image_book.rotation
         )
 
@@ -318,14 +325,32 @@ class NAOLibrarian(object):
 
     def take_book_photo(self):
         # type: () -> str
-        logging.info("Taking book photo")
         file_path = "./run/cover.png"
 
+        logging.info("Taking book photo")
         np_arr = self.take_photo(return_numpy=True)
-        warped_image = get_warped_image(np_arr, debug=True)
-        result = warped_image if warped_image is not None else np_arr
-        cv2.imwrite(file_path, result)
-        logging.info("Book photo saved to {}".format(file_path))
+
+        log_path_cover = "./logs/"+datetime.now().strftime("%d-%m-%Y %H-%M-%S")+"-cover.jpg"
+        cv2.imwrite(log_path_cover, np_arr)
+        logging.info("Book log photo saved to {}".format(log_path_cover))
+
+
+        logging.info("Trying to warp image")
+        warped_image = get_warped_image(np_arr)
+        logging.info("Warp {}succesfull".format("un" if warped_image is None else ""))
+
+        if warped_image is not None:
+            log_path_warped = "./logs/"+datetime.now().strftime("%d-%m-%Y %H-%M-%S")+"-warped.jpg"
+            cv2.imwrite(log_path_warped, warped_image)
+            logging.info("Warped book photo saved to {}".format(log_path_warped))
+            cv2.imwrite(file_path, warped_image)
+            logging.info("Run book photo saved WARPED to {}".format(file_path))
+        else:
+            cv2.imwrite(file_path, np_arr)
+            logging.info("Run book photo saved UNWARPED to {}".format(file_path))
+
+
+
         return file_path
 
     def take_photo(self, resolution="1280*960", return_numpy=False):
