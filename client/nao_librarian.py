@@ -125,6 +125,8 @@ class NAOLibrarian(object):
             self.box_not_found_decorations(book_info)
 
         self.go_to_position(*self.position_history[0])
+        self.tts.say("I'm done! Touch my head for me to look for more books!")
+        self.wait_for_starting_touch()
 
     def blink(self):
         if self.blink_flag:
@@ -489,20 +491,19 @@ class NAOLibrarian(object):
         current_position = self.motion.getRobotPosition(True)
         if mirror_theta:
             theta = theta + 3.1415 if theta <= 0 else theta - 3.1415
-        th = theta - current_position[2]
-        if th > 3.1415:
-            th -= 2*3.1415
-        elif th < -3.1415:
-            th += 2*3.1415
+
+        # make current theta 0
         self.motion.moveTo(
-            current_position[0],
-            current_position[1],
-            0
+            0,
+            0,
+            -current_position[2]
         )
+
+        # move to x, y
         self.moveTo(
             x - current_position[0],
             y - current_position[1],
-            th
+            theta
         )
 
     def find_box(self, book_info):
