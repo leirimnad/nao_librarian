@@ -139,6 +139,7 @@ class NAOLibrarian(object):
         resolution = "1280*960"
 
         img = self.take_photo(resolution=resolution, return_numpy=False)
+        img = self.sharpen(img)
         book = self.find_book_mock(img) if self.mock_recognition else self.find_book(img)
         while book is None:
 
@@ -323,7 +324,13 @@ class NAOLibrarian(object):
         elif th < -pi:
             th += 2*pi
         return cx+x, cy+y, th
-
+    def sharpen(img):
+         kernel = np.array([[-1,-1,-1], 
+                       [-1, 9,-1],
+                       [-1,-1,-1]])
+        sharpened = cv2.filter2D(image, -1, kernel)
+        return sharpened
+     
     def change_posture_for_photo(self):
         # type: () -> None
         logging.info("Changing posture for photo")

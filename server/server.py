@@ -66,7 +66,10 @@ class FileUploadHandler(BaseHTTPRequestHandler):
 
         req = requests.get('https://www.googleapis.com/books/v1/volumes',
                         params={'q': str(result[0][0]) + " " + str(result[1][0]), "key": "AIzaSyCL1jiXvWMEBBhu1ulEVSgELE_h84IdpqM"})
-        book_id = req.json()['items'][0]['id']
+        try:
+            book_id = req.json()['items'][0]['id']
+        except:
+            return None
 
         book = requests.get('https://www.googleapis.com/books/v1/volumes/' + book_id,
                         params={"key": "AIzaSyCL1jiXvWMEBBhu1ulEVSgELE_h84IdpqM"}).json()['volumeInfo']
@@ -110,7 +113,22 @@ class FileUploadHandler(BaseHTTPRequestHandler):
             self.end_headers()
             json_string = json.loads(json.dumps(book))
             print(json_string)
-            json_modified = {"title": json_string["title"], "authors": json_string["authors"], "categories": json_string["categories"]}
+            title=""
+            authors=[]
+            categories=[]
+            try:
+                title=json_string["title"]
+            except:
+                pass
+            try:
+                authors=json_string["authors"]
+            except:
+                pass
+            try:
+                categories=json_string["categories"]
+            except:
+                pass
+            json_modified = {"title": title, "authors": authors, "categories": categories}
             self.wfile.write(json.dumps(json_modified).encode('utf-8'))
         elif self.path == '/category':
             print (f"RECOGNISE CATEGORY from {self.client_address[0]}")
