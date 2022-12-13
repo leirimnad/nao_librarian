@@ -136,7 +136,9 @@ class NAOLibrarian(object):
 
         logging.info("Starting looking for books")
 
-        img = self.take_photo(resolution="640*480", return_numpy=False)
+        resolution = "1280*960"
+
+        img = self.take_photo(resolution=resolution, return_numpy=False)
         book = self.find_book_mock(img) if self.mock_recognition else self.find_book(img)
         while book is None:
 
@@ -146,7 +148,7 @@ class NAOLibrarian(object):
                 # self.blink()
                 logging.info("Moving 30 deg right")
                 self.moveTo(0, 0, np.pi / 6)
-                img = self.take_photo(resolution="640*480", return_numpy=False)
+                img = self.take_photo(resolution=resolution, return_numpy=False)
                 book = self.find_book(img)
                 if book:
                     return book
@@ -160,7 +162,7 @@ class NAOLibrarian(object):
                 # self.blink()
                 logging.info("Moving 30 deg right")
                 self.moveTo(0, 0, np.pi / 6)
-                img = self.take_photo(resolution="640*480", return_numpy=False)
+                img = self.take_photo(resolution=resolution, return_numpy=False)
                 book = self.find_book(img)
                 if book:
                     return book
@@ -225,6 +227,7 @@ class NAOLibrarian(object):
         x = round(book.image_book.vertical_distance/100, 4)
         y = round(book.image_book.horizontal_distance/100, 4)
         logging.info("Book in absolute position: x={} y={}".format(x, y))
+        logging.info("Robot position: {}".format(self.motion.getRobotPosition(True)))
         x, y, _ = self.get_position_relative_to_robot(x, y, 0)
         logging.info("Book in relative position: x={} y={}".format(x, y))
         point_to = [x, y, 0.08]
@@ -313,14 +316,20 @@ class NAOLibrarian(object):
 
     def get_position_relative_to_robot(self, x, y, theta):
         cx, cy, ct = self.motion.getRobotPosition(True)
-        return cx-x, cy-y, ct-theta
+        th = ct+theta
+        pi = 3.14159
+        if th > pi:
+            th -= 2*pi
+        elif th < -pi:
+            th += 2*pi
+        return cx+x, cy+y, th
 
     def change_posture_for_photo(self):
         # type: () -> None
         logging.info("Changing posture for photo")
         self.posture.goToPosture("Crouch", 1)
         self.motion.setStiffnesses("Head", 1.0)
-        self.motion.setAngles("HeadPitch", 1, 0.1)
+        self.motion.setAngles("HeadPitch", 0.43, 0.1)
         self.motion.setAngles("HeadYaw", 0.0, 0.1)
 
     def take_book_photo(self):
@@ -356,7 +365,7 @@ class NAOLibrarian(object):
     def take_photo(self, resolution="1280*960", return_numpy=False):
 
         resolutions = {
-            "1280*960": (3,1280,930),
+            "1280*960": (3,1280,960),
             "640*480": (2,640,480),
             "320*240": (1,320,240)
         }

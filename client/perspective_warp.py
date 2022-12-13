@@ -6,6 +6,7 @@ import numpy as np
 
 def get_warped_image(img, debug=False):
     try:
+        ih, iw = img.shape[:2]
         img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         img_blur = cv2.GaussianBlur(img_gray, (3, 3), 0)
 
@@ -119,6 +120,12 @@ def get_warped_image(img, debug=False):
         if len(res_points) != 4:
             return None
         warped_image = four_point_transform(img, np.array(res_points))
+
+        wh, ww = warped_image.shape[:2]
+
+        if wh < ih * 0.25 or ww < iw * 0.25:
+            return None
+
 
         if debug:
             cv2.imshow('Warped', warped_image)
