@@ -9,6 +9,7 @@ from pprint import pprint
 import requests
 import numpy as np
 from datetime import datetime
+from nostril import nonsense
 
 def is_ascii(s):
         return all(ord(c) < 128 for c in s)
@@ -80,8 +81,14 @@ class FileUploadHandler(BaseHTTPRequestHandler):
                 return None
 
             pprint(result)
+                
             q =  str(result[0][0]) + " " + str(result[1][0])
-
+            print(q)
+            if (nonsense(q)):
+                print('NONSENSE rotating')
+                image = cv2.rotate(image, cv2.cv2.ROTATE_90_CLOCKWISE)
+                continue
+            
             if( len(q)<5):
                 print('name too short rotating')
                 image = cv2.rotate(image, cv2.cv2.ROTATE_90_CLOCKWISE)
@@ -94,7 +101,7 @@ class FileUploadHandler(BaseHTTPRequestHandler):
             try:
                 print('REQUEST')
                 pprint(req)
-                #book_id = req.json()['items'][0]['id']
+                
                 book = req.json()['items'][0]['volumeInfo']
                 pprint(book)
             except:
