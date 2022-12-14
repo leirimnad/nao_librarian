@@ -9,6 +9,7 @@ from pprint import pprint
 import requests
 import numpy as np
 from datetime import datetime
+from nostril import nonsense
 
 def is_ascii(s):
         return all(ord(c) < 128 for c in s)
@@ -28,7 +29,7 @@ class FileUploadHandler(BaseHTTPRequestHandler):
 
     
 
-    def prepr(self,img_path):
+    def prepare_image(self,img_path):
         img = cv2.imread(img_path)
         #resized = cv2.resize(img,(int(img.shape[0]*1.5),int(img.shape[1]*1.5)),interpolation = cv2.INTER_CUBIC)
         grey = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -52,7 +53,7 @@ class FileUploadHandler(BaseHTTPRequestHandler):
         
         
         time = datetime.now()
-        result = self.reader.readtext(self.prepr(img_path),allowlist = alnum,batch_size=200,workers=4,decoder="wordbeamsearch")
+        result = self.reader.readtext(self.prepare_image(img_path),allowlist = alnum,batch_size=200,workers=4,decoder="wordbeamsearch")
         print(f"Request took {datetime.now() - time}")
         
         result = list(map(lambda x: [x[1], self.get_polygon_area([x[0][0], x[0][1], x[0][2], x[0][3]])], result))
@@ -72,17 +73,37 @@ class FileUploadHandler(BaseHTTPRequestHandler):
             alnum = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ '
             result=self.reader.readtext(image,allowlist = alnum,batch_size=200,workers=4,decoder="wordbeamsearch")
             print(f"Request took {datetime.now() - time}")
+            
             result = list(map(lambda x: [x[1], self.get_polygon_area([x[0][0], x[0][1], x[0][2], x[0][3]])], result))
             result.sort(key=lambda x: x[1], reverse=True)
             pprint(result)
+            if result == []:
+                return None
+
+            pprint(result)
+                
+            q =  str(result[0][0]) + " " + str(result[1][0])
+            print(q)
+            if (nonsense(q)):
+                print('NONSENSE rotating')
+                image = cv2.rotate(image, cv2.cv2.ROTATE_90_CLOCKWISE)
+                continue
             
+            if( len(q)<5):
+                print('name too short rotating')
+                image = cv2.rotate(image, cv2.cv2.ROTATE_90_CLOCKWISE)
+                continue
 
             req = requests.get('https://www.googleapis.com/books/v1/volumes',
-                            params={'q': str(result[0][0]) + " " + str(result[1][0]), "key": "AIzaSyCL1jiXvWMEBBhu1ulEVSgELE_h84IdpqM"})
+                            params={'q':q, "key": "AIzaSyCL1jiXvWMEBBhu1ulEVSgELE_h84IdpqM"})
             if req =={}:
                 return None
             try:
-                book_id = req.json()['items'][0]['id']
+                print('REQUEST')
+                pprint(req)
+                
+                book = req.json()['items'][0]['volumeInfo']
+                pprint(book)
             except:
                 print('NO match, rotating')
                 image = cv2.rotate(image, cv2.cv2.ROTATE_90_CLOCKWISE)
@@ -92,18 +113,13 @@ class FileUploadHandler(BaseHTTPRequestHandler):
                 cv2.waitKey(0)
                 # and finally destroy/close all open windows
                 cv2.destroyAllWindows()
-
-
-
                 continue
-            book = requests.get('https://www.googleapis.com/books/v1/volumes/' + book_id,
-                            params={"key": "AIzaSyCL1jiXvWMEBBhu1ulEVSgELE_h84IdpqM"}).json()['volumeInfo']
-            if(len(book['title'])<3):
-                print('name too short rotating')
-                image = cv2.rotate(image, cv2.cv2.ROTATE_90_CLOCKWISE)
+            if not book:
                 continue
+            #book = requests.get('https://www.googleapis.com/books/v1/volumes/' + book_id,params={"key": "AIzaSyCL1jiXvWMEBBhu1ulEVSgELE_h84IdpqM"}).json()['volumeInfo']
+
             break
-        if book_id is None: return None
+        if book is None: return None
 
         
         try:
@@ -156,7 +172,7 @@ class FileUploadHandler(BaseHTTPRequestHandler):
         return book
 
     def do_POST(self):
-        filename = datetime.now().strftime("%d-%m-%Y %H-%M-%S")+".jpg"
+        filename = datetime.now().strftime("%d-%m-%Y %H-%M-%S")+".png"
         form = cgi.FieldStorage(fp=self.rfile, headers=self.headers, environ={'REQUEST_METHOD':'POST', 'CONTENT_TYPE':self.headers['Content-Type']})
         file_item = None
         print(self.path)
