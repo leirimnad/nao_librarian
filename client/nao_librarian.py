@@ -257,7 +257,7 @@ class NAOLibrarian(object):
 
     def on_book_not_found(self):
         # type: () -> None
-        self.tts.say("Knihu jsem nenanenašel !")
+        self.tts.say("Knihu jsem nenašel !")
 
     def book_found_decorations(self, book):
         # type: (Book) -> None
@@ -498,7 +498,6 @@ class NAOLibrarian(object):
 #            self.go_to_position(*position, mirror_theta=True)
         x, y, _ = self.motion.getRobotPosition(True)
         self.go_to_position(*self.position_history[0], mirror_theta=False)
-        self.tts.say("I started from here, rotating")
         self.rotate()
 
         logging.info("Going to box area finished")
@@ -526,7 +525,6 @@ class NAOLibrarian(object):
                 self.reset_theta()
 
                 logging.debug("Intermediate position: {}".format(self.motion.getRobotPosition(True)))
-                self.tts.say("Oop")
 
                 # move to x, y
                 self.moveTo(
