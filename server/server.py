@@ -52,7 +52,7 @@ class FileUploadHandler(BaseHTTPRequestHandler):
         
         
         time = datetime.now()
-        result = self.reader.readtext(prepare_image(img_path),allowlist = alnum,batch_size=200,workers=4,decoder="wordbeamsearch")
+        result = self.reader.readtext(self.prepare_image(img_path),allowlist = alnum,batch_size=200,workers=4,decoder="wordbeamsearch")
         print(f"Request took {datetime.now() - time}")
         
         result = list(map(lambda x: [x[1], self.get_polygon_area([x[0][0], x[0][1], x[0][2], x[0][3]])], result))
@@ -75,7 +75,7 @@ class FileUploadHandler(BaseHTTPRequestHandler):
             result = list(map(lambda x: [x[1], self.get_polygon_area([x[0][0], x[0][1], x[0][2], x[0][3]])], result))
             result.sort(key=lambda x: x[1], reverse=True)
             pprint(result)
-            if result =[]:
+            if result == []:
                 return None
 
             req = requests.get('https://www.googleapis.com/books/v1/volumes',
