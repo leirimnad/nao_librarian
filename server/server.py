@@ -72,18 +72,31 @@ class FileUploadHandler(BaseHTTPRequestHandler):
             alnum = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ '
             result=self.reader.readtext(image,allowlist = alnum,batch_size=200,workers=4,decoder="wordbeamsearch")
             print(f"Request took {datetime.now() - time}")
+            
             result = list(map(lambda x: [x[1], self.get_polygon_area([x[0][0], x[0][1], x[0][2], x[0][3]])], result))
             result.sort(key=lambda x: x[1], reverse=True)
             pprint(result)
             if result == []:
                 return None
 
+            pprint(result)
+            q =  str(result[0][0]) + " " + str(result[1][0])
+
+            if( len(q)<5):
+                print('name too short rotating')
+                image = cv2.rotate(image, cv2.cv2.ROTATE_90_CLOCKWISE)
+                continue
+
             req = requests.get('https://www.googleapis.com/books/v1/volumes',
-                            params={'q': str(result[0][0]) + " " + str(result[1][0]), "key": "AIzaSyCL1jiXvWMEBBhu1ulEVSgELE_h84IdpqM"})
+                            params={'q':q, "key": "AIzaSyCL1jiXvWMEBBhu1ulEVSgELE_h84IdpqM"})
             if req =={}:
                 return None
             try:
-                book_id = req.json()['items'][0]['id']
+                print('REQUEST')
+                pprint(req)
+                #book_id = req.json()['items'][0]['id']
+                book = req.json()['items'][0]['volumeInfo']
+                pprint(book)
             except:
                 print('NO match, rotating')
                 image = cv2.rotate(image, cv2.cv2.ROTATE_90_CLOCKWISE)
@@ -93,18 +106,13 @@ class FileUploadHandler(BaseHTTPRequestHandler):
                 cv2.waitKey(0)
                 # and finally destroy/close all open windows
                 cv2.destroyAllWindows()
-
-
-
                 continue
-            book = requests.get('https://www.googleapis.com/books/v1/volumes/' + book_id,
-                            params={"key": "AIzaSyCL1jiXvWMEBBhu1ulEVSgELE_h84IdpqM"}).json()['volumeInfo']
-            if(len(book['title'])<3):
-                print('name too short rotating')
-                image = cv2.rotate(image, cv2.cv2.ROTATE_90_CLOCKWISE)
+            if not book:
                 continue
+            #book = requests.get('https://www.googleapis.com/books/v1/volumes/' + book_id,params={"key": "AIzaSyCL1jiXvWMEBBhu1ulEVSgELE_h84IdpqM"}).json()['volumeInfo']
+
             break
-        if book_id is None: return None
+        if book is None: return None
 
         
         try:
