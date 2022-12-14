@@ -31,7 +31,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--robot", type=str, help="Robot Name or address.", required=True)
-    parser.add_argument("--port", type=int, help="Naoqi port number", required=True)
+    parser.add_argument("--port", type=int, help="Naoqi port number", default="9559")
     parser.add_argument("--ocr", type=str, help="OCR server address", required=True)
     parser.add_argument("--rec", type=str, help="Object recognition server address", required=False, default="")
 
