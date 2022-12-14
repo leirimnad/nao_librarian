@@ -39,6 +39,8 @@ class NAOLibrarian(object):
         self.tracker = session.service("ALTracker")
         self.posture = session.service("ALRobotPosture")
         self.leds = session.service("ALLeds")
+        self.visual_compass = session.service("ALVisualCompass")
+        self.visual_compass.setCurrentImageAsReference()
         self.blink_flag = False
         session.service("ALNavigation")
         self.rec_server_address = rec_server_address
@@ -342,10 +344,23 @@ class NAOLibrarian(object):
             min_step_distance=min_step_distance
         )
 
+    def reset_theta(self, max_tries=4):
+        logging.debug("Resetting theta")
+        x, y, theta = self.motion.getRobotPosition(True)
+        self.moveTo(0, 0, -theta)
+        x, y, theta = self.motion.getRobotPosition(True)
+        tries = 0
+        while abs(theta) > 0.05 and tries < max_tries:
+            logging.debug("Not enough")
+            self.moveTo(0, 0, -theta)
+            x, y, theta = self.motion.getRobotPosition(True)
+            tries += 1
+        logging.debug("Theta reset finished")
+
     def moveTo(self, x, y, theta):
         # type: (float, float, float) -> None
         x, y, theta = round(x, 4), round(y, 4), round(theta, 4)
-        logging.debug("Moving to: x={}, y={}, theta={}".format(x, y, theta))
+        logging.debug("Moving relative: x={}, y={}, theta={}".format(x, y, theta))
         self.position_history.append(self.motion.getRobotPosition(True))
         self.motion.moveTo(x, y, theta)
 
@@ -394,6 +409,7 @@ class NAOLibrarian(object):
             cv2.imwrite(file_path, np_arr)
             logging.info("Run book photo saved UNWARPED to {}".format(file_path))
 
+        sleep(0.3)
         self.motion.setAngles("HeadPitch", 0, 0.1)
 
         return file_path
@@ -480,31 +496,64 @@ class NAOLibrarian(object):
 #        for position in reversed(position_history_copy):
 #            self.go_to_position(*position, mirror_theta=True)
         x, y, _ = self.motion.getRobotPosition(True)
-        self.go_to_position(*self.position_history[0], mirror_theta=True)
+        self.go_to_position(*self.position_history[0], mirror_theta=False)
+        self.tts.say("I started from here, rotating")
+        self.rotate()
 
         logging.info("Going to box area finished")
         self.tts.say("Let's look at the boxes")
 
-    def go_to_position(self, x, y, theta, mirror_theta=False):
-        # type: (float, float, float, bool) -> None
-        logging.debug("Going to position: x={}, y={}, theta={}, mirror_theta={}".format(x, y, theta, mirror_theta))
+    def go_to_position(self, x, y, theta, mirror_theta=False, visual_compass=False):
+        # type: (float, float, float, bool, bool) -> None
+        logging.debug("Going to position: x={}, y={}, theta={}, mirror_theta={}, viscomp={}".format(x, y, theta, mirror_theta, visual_compass))
         current_position = self.motion.getRobotPosition(True)
+        cx, cy, ct = current_position
         if mirror_theta:
             theta = theta + 3.1415 if theta <= 0 else theta - 3.1415
+            logging.debug("With mirrored theta: x={}, y={}, theta={}".format(x, y, theta))
 
-        # make current theta 0
-        self.motion.moveTo(
-            0,
-            0,
-            -current_position[2]
-        )
+        while abs(cx - x) > 0.05 or abs(cy - y) > 0.05 or abs(ct - theta) > 0.1:
+            logging.debug("Not on the right position yet, current: x={}, y={}, theta={}".format(cx, cy, ct))
+            if not visual_compass:
+                # make current theta 0
+                #self.moveTo(
+                #    0,
+                #   0 0,
+                #    -current_position[2]
+                #)
 
-        # move to x, y
-        self.moveTo(
-            x - current_position[0],
-            y - current_position[1],
-            theta
-        )
+                self.reset_theta()
+
+                logging.debug("Intermediate position: {}".format(self.motion.getRobotPosition(True)))
+                self.tts.say("Oop")
+
+                # move to x, y
+                self.moveTo(
+                    x - current_position[0] if abs(x - current_position[0]) > 0.02 else 0,
+                    y - current_position[1] if abs(y - current_position[1]) > 0.02 else 0,
+                    theta if abs(theta) > 0.05 else 0
+                )
+            else:
+                self.visual_compass.moveTo(
+                    x - current_position[0] if abs(x - current_position[0]) > 0.02 else 0,
+                    y - current_position[1] if abs(y - current_position[1]) > 0.02 else 0,
+                    theta - current_position[2] if abs(theta - current_position[2]) > 0.05 else 0
+                )
+
+            current_position = self.motion.getRobotPosition(True)
+            cx, cy, ct = current_position
+
+
+        logging.debug("Going to position finished, current position: {}".format(self.motion.getRobotPosition(True)))
+
+    def rotate(self):
+        # type: () -> None
+        logging.info("Rotating")
+        self.motion.moveTo(0, 0, 3.14156/4.0)
+        self.motion.moveTo(0, 0, 3.14156/4.0)
+        self.motion.moveTo(0, 0, 3.14156/4.0)
+        self.motion.moveTo(0, 0, 3.14156/4.0)
+        logging.info("Done rotating")
 
     def find_box(self, book_info):
         # type: (BookInfo) -> str or None
@@ -547,12 +596,17 @@ class NAOLibrarian(object):
 
     def box_found_decorations(self, book_info, box_category):
         # type: (BookInfo, str) -> None
+        if box_category is None:
+            self.tts.say("This is the right box to put this uncategorized book in.")
+            return
         self.tts.say("This is the right box to put this book in, it is called: " + box_category)
 
     def box_not_found_decorations(self, book_info):
         # type: (BookInfo) -> None
         self.tts.say("I did not find the right box to put this book in")
-        if len(book_info.categories) < 5:
+        if book_info.categories is None:
+            self.tts.say("I did not find the box for uncategorized books")
+        elif len(book_info.categories) < 5:
             self.tts.say("There are no boxes for categories like: " + ", ".join(book_info.categories))
         else:
             self.tts.say("There are no boxes for categories like: " + ", ".join(shuffle(book_info.categories)[:5]) + ", and others")
