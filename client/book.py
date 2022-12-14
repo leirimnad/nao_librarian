@@ -57,6 +57,9 @@ class BookInfo(object):
             )
 
     def aligns_with_category(self, category):
+        if category.lower() == "uncategorized":
+            return True
+
         for cat in self.categories:
             if category.lower() in cat.lower():
                 return True

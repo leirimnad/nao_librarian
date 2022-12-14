@@ -33,7 +33,7 @@ class NAOLibrarian(object):
         self.memory_service = session.service("ALMemory")
         self.tts = session.service("ALTextToSpeech")
         self.tts.setLanguage("English")
-        self.tts.setVolume(0.4)
+        self.tts.setVolume(0.7)
         self.motion = session.service("ALMotion")
         self.video_device = session.service("ALVideoDevice")
         self.tracker = session.service("ALTracker")
@@ -519,11 +519,13 @@ class NAOLibrarian(object):
             self.tts.say("I did not find the box in the box area")
             return None
 
-        if book_info.aligns_with_category(text):
+        category = text[4:].strip()
+
+        if book_info.aligns_with_category(category):
             logging.info("Book aligns with category")
-            return text[7:]
+            return category
         else:
-            logging.info("Book does not align with category")
+            logging.info("Book does not align with category '{}'".format(category))
             self.move_to_next_box()
             self.find_box(book_info)
 
@@ -550,4 +552,7 @@ class NAOLibrarian(object):
     def box_not_found_decorations(self, book_info):
         # type: (BookInfo) -> None
         self.tts.say("I did not find the right box to put this book in")
-        self.tts.say("There are no boxes for categories like: " + ", ".join(book_info.categories))
+        if len(book_info.categories) < 5:
+            self.tts.say("There are no boxes for categories like: " + ", ".join(book_info.categories))
+        else:
+            self.tts.say("There are no boxes for categories like: " + ", ".join(shuffle(book_info.categories)[:5]) + ", and others")
