@@ -32,7 +32,8 @@ class NAOLibrarian(object):
         session = app.session
         self.memory_service = session.service("ALMemory")
         self.tts = session.service("ALTextToSpeech")
-        self.tts.setLanguage("English")
+        #self.tts.setLanguage("English")
+        self.tts.setLanguage("Czech")
         self.tts.setVolume(0.7)
         self.motion = session.service("ALMotion")
         self.video_device = session.service("ALVideoDevice")
@@ -50,7 +51,7 @@ class NAOLibrarian(object):
         self.book_threshold = 0.017
 
         logging.info("Initialization finished")
-        self.tts.say("Ready for work! Touch my head to start.")
+        self.tts.say("Jdeme na to, dotkni se mojí hlavy.")
 
 
         self.run()
@@ -73,7 +74,7 @@ class NAOLibrarian(object):
                 self.touch.signal.disconnect(self.id)
                 logging.info("Head touch detected, starting the script")
                 logging.info("Starting position: {}".format(self.motion.getRobotPosition(True)))
-                self.tts.say("Starting the script!")
+                self.tts.say("Spouštím skript !")
                 self.start_script()
                 break
 
@@ -125,7 +126,7 @@ class NAOLibrarian(object):
             self.box_not_found_decorations(book_info)
 
         self.go_to_position(*self.position_history[0])
-        self.tts.say("I'm done! Touch my head for me to look for more books!")
+        self.tts.say("Hotovo ! Pokud mám hleddat dál, dotkni se mojí hlavy.")
         self.wait_for_starting_touch()
 
     def blink(self):
@@ -153,10 +154,10 @@ class NAOLibrarian(object):
             angle = np.pi / 6
             if book == -1:
                 angle = np.pi / 12
-                self.tts.say("Is it a book there, to the left?")
+                self.tts.say("Je kniha vlevo ?")
             elif book == 1:
                 angle = -np.pi / 12
-                self.tts.say("Is it a book there, to the right?")
+                self.tts.say("Je kniha vpravo ?")
 
             for i in range(0, 2):
                 # self.blink()
@@ -177,10 +178,10 @@ class NAOLibrarian(object):
             angle = np.pi / 6
             if book == -1:
                 angle = np.pi / 12
-                self.tts.say("Is there a book to the left?")
+                self.tts.say("Je kniha vlevo ?")
             elif book == 1:
                 angle = -np.pi / 12
-                self.tts.say("Is there a book to the right?")
+                self.tts.say("Je kniha vpravo ?")
 
 
             for i in range(0, 2):
@@ -254,7 +255,7 @@ class NAOLibrarian(object):
 
     def on_book_not_found(self):
         # type: () -> None
-        self.tts.say("Book not found!")
+        self.tts.say("Knihu jsem nenanenašel !")
 
     def book_found_decorations(self, book):
         # type: (Book) -> None
@@ -268,7 +269,7 @@ class NAOLibrarian(object):
         point_arm = "RArm" if y >= 0 else "LArm"
         logging.debug("Pointing {} to {}".format(point_arm, point_to))
         self.tracker.pointAt(point_arm, point_to, 2, 0.1)
-        self.tts.say("Book found!")
+        self.tts.say("Kniha nalezena !")
 
     def go_to_book(self, book):
         # type: (Book) -> None
@@ -427,11 +428,11 @@ class NAOLibrarian(object):
         def decorate_sending_photo(ctx):
             phrases = [
                 "Hmmm...",
-                "Let me think...",
-                "What book is this?",
-                "That's probably...",
+                "Chvíli si to promyslím...",
+                "Co je to za knihu ?",
+                "To je nejspíš...",
                 "Hmm...",
-                "Maybe it's...",
+                "Možná to je...",
             ]
             shuffle(phrases)
             it = 0
@@ -463,13 +464,13 @@ class NAOLibrarian(object):
     def on_book_info_not_found(self):
         # type: () -> None
         logging.info("Playing on book info not found")
-        self.tts.say("I did not find the book info")
+        self.tts.say("Nenašel jsem info o knize.")
 
     def say_book_info(self, book_info):
         # type: (BookInfo) -> None
         logging.info("Playing book info")
-        self.tts.say("The book is called: " + book_info.title)
-        self.tts.say("The authors are: " + ", ".join(book_info.authors))
+        self.tts.say("Kniha se jmenuje: " + book_info.title)
+        self.tts.say("Autory jsou: " + ", ".join(book_info.authors))
 
     def go_to_box_area(self):
         # type: () -> None
@@ -483,7 +484,7 @@ class NAOLibrarian(object):
         self.go_to_position(*self.position_history[0], mirror_theta=True)
 
         logging.info("Going to box area finished")
-        self.tts.say("Let's look at the boxes")
+        self.tts.say("Pojdme najít správnou krabici.")
 
     def go_to_position(self, x, y, theta, mirror_theta=False):
         # type: (float, float, float, bool) -> None
@@ -516,7 +517,7 @@ class NAOLibrarian(object):
         logging.info("Text from image: " + str(text))
         if text is None or not text.lower().startswith("cat:"):
             logging.warn("Text is None or does not start with cat:")
-            self.tts.say("I did not find the box in the box area")
+            self.tts.say("Krabici jsem nenašel")
             return None
 
         category = text[4:].strip()
@@ -547,12 +548,12 @@ class NAOLibrarian(object):
 
     def box_found_decorations(self, book_info, box_category):
         # type: (BookInfo, str) -> None
-        self.tts.say("This is the right box to put this book in, it is called: " + box_category)
+        self.tts.say("Tohle je správná krabice pro tuhle knihu, je to kategorie " + box_category)
 
     def box_not_found_decorations(self, book_info):
         # type: (BookInfo) -> None
-        self.tts.say("I did not find the right box to put this book in")
+        self.tts.say("Pro tuhle knihuu jsem nenašel správnou krabici.")
         if len(book_info.categories) < 5:
-            self.tts.say("There are no boxes for categories like: " + ", ".join(book_info.categories))
+            self.tts.say("Pro tyto kategorie nemáme krabice: " + ", ".join(book_info.categories))
         else:
-            self.tts.say("There are no boxes for categories like: " + ", ".join(shuffle(book_info.categories)[:5]) + ", and others")
+            self.tts.say("Pro tyto a některé další kategorie nemáme krabice " + ", ".join(shuffle(book_info.categories)[:5]))
