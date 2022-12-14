@@ -110,8 +110,9 @@ class NAOLibrarian(object):
 
         if book_info is None:
             self.on_book_info_not_found()
-            self.go_to_box_area()
             self.go_to_position(*self.position_history[0])
+            self.wait_for_starting_touch()
+            self.tts.say("Pokud mám hledat dál, dotkni se mojí hlavy.")
             return
 
         self.say_book_info(book_info)
@@ -128,7 +129,7 @@ class NAOLibrarian(object):
             self.box_not_found_decorations(book_info)
 
         self.go_to_position(*self.position_history[0])
-        self.tts.say("Hotovo ! Pokud mám hleddat dál, dotkni se mojí hlavy.")
+        self.tts.say("Hotovo ! Pokud mám hledat dál, dotkni se mojí hlavy.")
         self.wait_for_starting_touch()
 
     def blink(self):
