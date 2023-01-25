@@ -8,23 +8,26 @@ import logging
 from datetime import datetime
 import re
 
+
 def find_robot(name):
+    """Returns the IP address of the robot with the given name."""
     ips = {
-        'Albert':'10.10.48.220',
-        'Nikola':'10.10.48.221',
-        'Ervin':'10.10.48.222',
-        'Alan':'10.10.48.223',
-        'Karel':'10.10.48.224',
-        'Thomas':'10.10.48.225'
-           }
-    return ips.get(name,'')
+        'Albert': '10.10.48.220',
+        'Nikola': '10.10.48.221',
+        'Ervin': '10.10.48.222',
+        'Alan': '10.10.48.223',
+        'Karel': '10.10.48.224',
+        'Thomas': '10.10.48.225'
+    }
+    return ips.get(name, '')
+
 
 if __name__ == "__main__":
 
     logging.basicConfig(
         format='%(asctime)s %(message)s',
         datefmt='%H:%M:%S',
-        filename="logs/"+datetime.now().strftime("%d-%m-%Y %H-%M-%S") + '.log',
+        filename="logs/" + datetime.now().strftime("%d-%m-%Y %H-%M-%S") + '.log',
         level=logging.DEBUG
     )
     logging.getLogger().addHandler(logging.StreamHandler())
@@ -39,7 +42,7 @@ if __name__ == "__main__":
     pat = re.compile("^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$")
 
     if not pat.match(str(args.robot)):
-        ip=find_robot(str(args.robot))
+        ip = find_robot(str(args.robot))
         if ip == '':
             print("Robot {} was not found.".format(str(args.robot)))
             sys.exit(1)
@@ -59,4 +62,3 @@ if __name__ == "__main__":
 
     librarian = NAOLibrarian(app, args.ocr, args.rec)
     app.run()
-    

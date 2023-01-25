@@ -5,6 +5,13 @@ import numpy as np
 
 
 def get_warped_image(img, debug=False):
+    """
+    Perspective warp the image to get a top-down view.
+    Uses the edge detection to find the four edges of a rectangular object in the image.
+    :param img: image to be warped
+    :param debug: if True, show the intermediate steps
+    :return: warped image if successful, otherwise None
+    """
     try:
         ih, iw = img.shape[:2]
         img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -18,6 +25,11 @@ def get_warped_image(img, debug=False):
             cv2.waitKey(0)
 
         def get_lines(threshold):
+            """
+            Get the lines from the edge detection image.
+            :param threshold: threshold for the HoughLines function
+            :return: lines
+            """
             hough_lines = cv2.HoughLines(edges, 1, np.pi / 180 * 0.5, threshold)
 
             if hough_lines is None:
@@ -45,6 +57,11 @@ def get_warped_image(img, debug=False):
             res_lines = get_lines(th)
 
         def get_points(lines):
+            """
+            Get intersection points of the lines.
+            :param lines:
+            :return: intersection points
+            """
             intersection_points = []
             for i in range(len(lines)):
                 for j in range(i + 1, len(lines)):
@@ -61,7 +78,7 @@ def get_warped_image(img, debug=False):
 
             # Delete insane points
             intersection_points = [point for point in intersection_points if
-                                0 < point[0] < img.shape[1] and 0 < point[1] < img.shape[0]]
+                                   0 < point[0] < img.shape[1] and 0 < point[1] < img.shape[0]]
             return intersection_points
 
         res_points = get_points(res_lines)
@@ -90,6 +107,7 @@ def get_warped_image(img, debug=False):
             cv2.waitKey(0)
 
         def order_points(pts):
+            """Order points for use in perspective transform"""
             rect = np.zeros((4, 2), dtype="float32")
             s = pts.sum(axis=1)
             rect[0] = pts[np.argmin(s)]
@@ -100,6 +118,12 @@ def get_warped_image(img, debug=False):
             return rect
 
         def four_point_transform(image, pts):
+            """
+            Get the top-down view of the image.
+            :param image: image to be transformed
+            :param pts: points of the rectangle
+            :return: top-down view of the image
+            """
             rect = order_points(pts)
             tl, tr, br, bl = rect
             width_a = np.sqrt(((br[0] - bl[0]) ** 2) + ((br[1] - bl[1]) ** 2))
@@ -125,7 +149,6 @@ def get_warped_image(img, debug=False):
 
         if wh < ih * 0.35 or ww < iw * 0.35:
             return None
-
 
         if debug:
             cv2.imshow('Warped', warped_image)

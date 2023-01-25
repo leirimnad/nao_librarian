@@ -3,6 +3,7 @@ from tools import get_distance
 
 
 class ImageBook(object):
+    """Class to represent a book position in the image"""
     def __init__(self, image, xl, xr, yt, yb):
         self.image = image
         self.xl = xl
@@ -14,6 +15,8 @@ class ImageBook(object):
 
     def get_same_book(self, books):
         # type: (list) -> ImageBook
+        """Return the book in the list that is the closest to be this one"""
+
         sorted_books = sorted(books, key=lambda book: abs(book.distance - self.distance))
         return sorted_books[0]
 
@@ -27,6 +30,7 @@ class ImageBook(object):
 
 
 class Book(object):
+    """Class to represent a book in the real world"""
     def __init__(self, image_book):
         self.info = None
         self.image_book = image_book
@@ -43,6 +47,7 @@ class Book(object):
 
 
 class BookInfo(object):
+    """Class to represent a book info, with title, authors and categories"""
     def __init__(self, title, authors, categories):
         super(BookInfo, self).__init__()
         self.title = title

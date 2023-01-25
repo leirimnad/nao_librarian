@@ -16,6 +16,7 @@ from time import sleep
 
 
 class NAOLibrarian(object):
+    """Main class for the Librarian application"""
     def __init__(self, app, ocr_server_address, rec_server_address):
         super(NAOLibrarian, self).__init__()
 
@@ -64,6 +65,7 @@ class NAOLibrarian(object):
         self.wait_for_starting_touch()
 
     def wait_for_starting_touch(self):
+        """Will run the on_starting_touch method when the head is touched"""
         self.id = self.touch.signal.connect(self.on_starting_touch)
         logging.info("Waiting for starting touch")
 
@@ -141,6 +143,10 @@ class NAOLibrarian(object):
 
     def look_for_book(self):
         # type: () -> ImageBook
+        """
+        Scans the area around the robot and tries to find a book
+        :return: ImageBook
+        """
 
         logging.info("Starting looking for books")
 
@@ -152,7 +158,6 @@ class NAOLibrarian(object):
         while book in [None, -1, 1]:
 
             logging.info("Book search result: {}".format(book))
-
 
             angle = np.pi / 6
             if book == -1:
@@ -217,6 +222,12 @@ class NAOLibrarian(object):
         return ImageBook(nparr_from_image(img), int(img_width*0.4), int(img_width*0.6), int(img_height*0.7), int(img_height*0.8))
 
     def find_book(self, img, threshold=None):
+        """
+        Tries to find a book in the image
+        :param img: image to search in
+        :param threshold: threshold for the detection
+        :return: ImageBook if found, None otherwise, -1 if book is slightly visible on the left, 1 on the right
+        """
         if threshold is None:
             threshold = self.book_threshold
         logging.info("Object detection requested with threshold {}".format(threshold))
@@ -296,6 +307,14 @@ class NAOLibrarian(object):
 
     def move_with_stops(self, image_book, book_func, stops=None, safe_distance=50, min_step_distance=30):
         # type: (NAOLibrarian, ImageBook, callable, int, int, int) -> None
+        """
+        Moves to the book with several stops to correct the position
+        :param image_book: ImageBook to move to
+        :param book_func: function to call to get the ImageBooks list on the stop
+        :param stops: preferred number of stops
+        :param safe_distance: minimum distance to stop before the book
+        :param min_step_distance: minimum distance to move before the next stop
+        """
         distance_with_stops = max(0, image_book.distance - safe_distance)
 
         logging.info("Moving with stops to book: {}".format(image_book))
@@ -347,6 +366,7 @@ class NAOLibrarian(object):
         )
 
     def reset_theta(self, max_tries=4):
+        """Turns the robot to reset the theta angle to 0"""
         logging.debug("Resetting theta")
         x, y, theta = self.motion.getRobotPosition(True)
         self.moveTo(0, 0, -theta)
@@ -360,6 +380,7 @@ class NAOLibrarian(object):
         logging.debug("Theta reset finished")
 
     def moveTo(self, x, y, theta):
+        """Moves the robot to the given position relative to the robot's, saves the previous position to the memory"""
         # type: (float, float, float) -> None
         x, y, theta = round(x, 4), round(y, 4), round(theta, 4)
         logging.debug("Moving relative: x={}, y={}, theta={}".format(x, y, theta))
@@ -367,6 +388,7 @@ class NAOLibrarian(object):
         self.motion.moveTo(x, y, theta)
 
     def get_position_relative_to_robot(self, x, y, theta):
+        """Returns the position relative to the robot's position"""
         cx, cy, ct = self.motion.getRobotPosition(True)
         th = ct+theta
         pi = 3.14159
@@ -387,6 +409,7 @@ class NAOLibrarian(object):
 
     def take_book_photo(self):
         # type: () -> str
+        """Takes a photo of the book, tries to warp it, and returns the path to the photo"""
         file_path = "./run/cover.png"
 
         logging.info("Taking book photo")
@@ -439,6 +462,7 @@ class NAOLibrarian(object):
 
     def send_photo_to_server(self, photo_path):
         # type: (str) -> BookInfo or None
+        """Sends the photo to the server and returns the book info"""
 
         logging.info("Sending photo to server")
 
@@ -491,6 +515,7 @@ class NAOLibrarian(object):
 
     def go_to_box_area(self):
         # type: () -> None
+        """Moves the robot to the box area using the first position in the position history"""
         logging.info("Going to box area")
         logging.debug("Position history: \n{}".format(pprint.pformat(self.position_history)))
         logging.debug("Current position: {}".format(self.motion.getRobotPosition(True)))
@@ -506,6 +531,7 @@ class NAOLibrarian(object):
 
     def go_to_position(self, x, y, theta, mirror_theta=False, visual_compass=False):
         # type: (float, float, float, bool, bool) -> None
+        """Moves the robot to the given position (absolute coordinates)"""
         logging.debug("Going to position: x={}, y={}, theta={}, mirror_theta={}, viscomp={}".format(x, y, theta, mirror_theta, visual_compass))
         current_position = self.motion.getRobotPosition(True)
         cx, cy, ct = current_position
@@ -557,6 +583,12 @@ class NAOLibrarian(object):
 
     def find_box(self, book_info):
         # type: (BookInfo) -> str or None
+        """
+        Finds the box that matches the given book info.
+        Robot moves along the box area and scans the boxes until the matching box or no box is found.
+        :param book_info: BookInfo object
+        :return: category of the box or None if no box was found
+        """
 
         logging.info("Checking if in front is the box for book: " + str(book_info))
 
