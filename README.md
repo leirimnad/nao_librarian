@@ -1,9 +1,15 @@
 # PR-BI-ZIVS-2022-NAO-knihovnik 
 
+NAO Librarian project. \
+Makes NAO robot look for books around him, search the web for their genres and lead the user to the box that corresponds with a genre. \
+For more details on the robot's scenario, see [report](report_zivs.pdf) or check out the [video presentation](https://youtu.be/UQr7s4u6YVg).
+
+
 ## Getting the project
 ```sh
-#this will install the packages into system we, however suggest creating separate virtual enviroment for server and client
-#clone project
+# this will install the packages into the system 
+# however, we suggest creating a separate virtual enviroment for a server and a client
+# clone project
 git clone git@gitlab.fit.cvut.cz:skrbek/pr-bi-zivs-2022-nao-knihovnik.git
 cd pr-bi-zivs-2022-nao-knihovnik
 cd client
