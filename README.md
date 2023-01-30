@@ -20,6 +20,8 @@ pip3 install -r requirements.txt # requirements for server side
 # named robot with default (9559) port
 /opt/robots/bin/python-naov6 run.py --robot Albert  --ocr http://10.10.48.223:8080 --rec tcp://10.10.48.91:9999
 ```
+`ocr` - server side address \
+`rec` - NAOqi recognition server address
 
 ### Server
 ```sh
