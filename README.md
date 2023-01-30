@@ -2,6 +2,7 @@
 
 ## Getting the project
 ```sh
+#this will install the packages into system we, however suggest creating separate virtual enviroment for server and client
 #clone project
 git clone git@gitlab.fit.cvut.cz:skrbek/pr-bi-zivs-2022-nao-knihovnik.git
 cd pr-bi-zivs-2022-nao-knihovnik
