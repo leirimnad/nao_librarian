@@ -1,5 +1,4 @@
-# PR-BI-ZIVS-2022-NAO-knihovnik
-skopema3@livsgpu01:~/zivs/pr-bi-zivs-2022-nao-knihovnik/server$ CUDA_VISIBLE_DEVICES=1 python3 server.py 
+# PR-BI-ZIVS-2022-NAO-knihovnik 
 
 ## Getting the project
 ```sh
@@ -23,5 +22,5 @@ pip3 install -r requirements.txt # requirements for server side
 
 ### Server
 ```sh
-python3 server.py
+CUDA_VISIBLE_DEVICES=1 python3 server.py
 ```
