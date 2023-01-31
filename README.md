@@ -31,7 +31,8 @@ pip3 install -r requirements.txt # requirements for server side
 /opt/robots/bin/python-naov6 run.py --ip 10.10.48.223 --port 9559 --ocr http://192.168.1.1:8080 --rec tcp://192.168.1.1:9999
 /opt/robots/bin/python-naov6 run.py --robot Albert  --ocr http://192.168.1.1:8080 --rec tcp://192.168.1.1:9999
 ```
-`ip`, `port` - robot's address \
+**Parameters:** \
+`ip`, `port` - robot's address, or `robot` - robot's name (runs with port _9559_) \
 `ocr` - address of the EasyOCR server (running the [/server/server.py](./server/server.py) file) \
 `rec` - NAOqi recognition server address
 
