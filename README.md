@@ -33,3 +33,4 @@ pip3 install -r requirements.txt # requirements for server side
 ```sh
 CUDA_VISIBLE_DEVICES=1 python3 server.py
 ```
+`CUDA_VISIBLE_DEVICES` - id of the GPU to use
