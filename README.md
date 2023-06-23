@@ -2,7 +2,7 @@
 
 NAO Librarian project. \
 Makes NAO robot look for books around him, search the web for their genres and lead the user to the box that corresponds with a genre. \
-For more details on the robot's scenario, see [report](report_zivs.pdf) or check out the [video presentation](https://youtu.be/UQr7s4u6YVg).
+For more details on the robot's scenario, see [report](report_zivs_en.pdf) or check out the [video presentation](https://youtu.be/UQr7s4u6YVg).
 
 
 ## Getting the project
